@@ -3,11 +3,18 @@
 #define REC_SIZE 9
 #define ID_SIZE 8
 #define GRP_IDX 8
+
+// max number of records
 #define REC_MAX 50
-#define END_OF_RECORDS 0
-#define REUSE_SLOT 0xff
+
+// record status flags
+#define REC_END_OF_RECS 0
+#define REC_REUSE 0xff
+
 #define NOT_FOUND -1
 #define CMD_BUFF_SIZE 64
+
+char* VERSION = "0.1";
 
 /**
  * searches all the records for the given
@@ -22,10 +29,10 @@ int findId(byte * id, byte * buf){
   for (i = 0; i < REC_MAX; i++){
     getRFID(i, buf);
     
-    if (REUSE_SLOT == buf[GRP_IDX]){
+    if (REC_REUSE == buf[GRP_IDX]){
       continue;
       
-    }else if(END_OF_RECORDS == buf[GRP_IDX]){
+    }else if(REC_END_OF_RECS == buf[GRP_IDX]){
       break;
     }
     
@@ -57,7 +64,7 @@ int findEmptyIndex(){
   
   for (int i = 0; i < REC_MAX; i++){
     groups = getGroupsAtIndex(i);
-    if (groups == END_OF_RECORDS || groups == REUSE_SLOT){
+    if (groups == REC_END_OF_RECS || groups == REC_REUSE){
       found = i;
       break;
     }
@@ -90,13 +97,12 @@ boolean setGroups(byte * id, byte groups){
   int pos = findId(id, rec);
   
   if (pos == NOT_FOUND){
-      Serial.println("new entry");
     // a new record
     pos = findEmptyIndex();
     
     // out of storage space!
     if (pos == NOT_FOUND){
-      Serial.println("out of storage space");
+      Serial.println("0\tout of storage space");
       return false;
     }
     
@@ -109,9 +115,7 @@ boolean setGroups(byte * id, byte groups){
     setRecord(pos, rec);
     
   }else{
-    Serial.println("found record:");
-    listRecord(rec);
-    Serial.println("setting group for existing record");
+    Serial.println("1\tsetting group for existing record");
     setGroupsAtIndex(pos, groups);
   }
   
@@ -163,23 +167,25 @@ void listRecords(){
   byte rec[REC_SIZE];
   
   int i;
+  int cnt = 0;
   boolean hasMore = true;
   for (i = 0; i < REC_MAX && hasMore; i++){
     getRFID(i, rec);
     switch (rec[GRP_IDX]){
-      case END_OF_RECORDS:
+      case REC_END_OF_RECS:
         hasMore = false;
         break;
 
-      case REUSE_SLOT:
+      case REC_REUSE:
         continue;
 
       default:
+      cnt++;
       listRecord(rec);
     }
   }
   Serial.print("there are ");
-  Serial.print(i);
+  Serial.print(cnt);
   Serial.println(" records.");
 }
 
@@ -275,7 +281,7 @@ void addCmd(char * args){
 void delCmd(char * args){
   byte id[ID_SIZE];
 
-  if (readId(args, id) && setGroups(id, REUSE_SLOT)){
+  if (readId(args, id) && setGroups(id, REC_REUSE)){
     Serial.println("record deleted");
   }else{
     Serial.println("error deleting record");
@@ -287,7 +293,7 @@ void delCmd(char * args){
  */
 void clear(){
   for (int i = 0; i < REC_MAX; i++){
-    setGroupsAtIndex(i, END_OF_RECORDS);
+    setGroupsAtIndex(i, REC_END_OF_RECS);
   }
 }
 
@@ -317,13 +323,23 @@ void runCmd(char * cmd){
     delCmd(cmd + 1); 
     break;
 
+    case 'v':
+    Serial.print("Version ");
+    Serial.println(VERSION);
+    break;
+
+    case 0:
+    // don't need to do anything
+    break;
+
     default:
     Serial.println("unrecognized command");
   }
+  Serial.println();
 }
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop(){
