@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!-- this should trigger UTF8 detectors: ☃ -->
+	
+	<!-- user-facing alerts -->
+	<string name="toast_bt_connecting">Connecting to %1$s…</string>
+	
+	<!-- User-facing error messages -->
+	<string name="error_no_bluetooth">Device does not seem to have Bluetooth support.</string>
+	<string name="error_no_bluetooth_turned_on">Sorry, Bluetooth was not able to be turned on.</string>
+	<string name="error_no_bluetooth_connect">Unable to connect device.</string>
+	<string name="error_bluetooth_connection_lost">Device connection was lost.</string>
+
+	<!-- Copyright (C) 2009 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+	
+	   <!--  DeviceListActivity -->
+    <string name="scanning">scanning for devices...</string>
+    <string name="select_device">select a device to connect</string>
+    <string name="none_paired">No devices have been paired</string>
+    <string name="none_found">No devices found</string>
+    <string name="title_paired_devices">Paired Devices</string>
+    <string name="title_other_devices">Other Available Devices</string>
+    <string name="button_scan">Scan for devices</string>
+    <string name="device_list_unnamed_device">unnamed device</string>
+	
+	
+</resources>
