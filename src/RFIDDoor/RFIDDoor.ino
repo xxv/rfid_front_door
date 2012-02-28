@@ -14,6 +14,9 @@
 #define NOT_FOUND -1
 #define CMD_BUFF_SIZE 64
 
+#define PIN_RELAY 7
+#define PIN_RELAY_OFF 8
+
 char* VERSION = "0.1";
 
 /**
@@ -265,6 +268,24 @@ boolean readId(char * idStr, byte * id){
   return true;
 }
 
+void activateRelay(){
+
+  // latch the relay on
+  digitalWrite(PIN_RELAY, HIGH);
+
+  delay(200);
+
+  digitalWrite(PIN_RELAY, LOW);
+
+  delay(2000);
+
+  // reset the relay (latching)
+  digitalWrite(PIN_RELAY_OFF, HIGH);
+  delay(200);
+  digitalWrite(PIN_RELAY_OFF, LOW);
+
+}
+
 /**
  * handle the add command
  */
@@ -323,6 +344,10 @@ void runCmd(char * cmd){
     delCmd(cmd + 1); 
     break;
 
+    case 'r':
+      activateRelay();
+      break;
+
     case 'v':
     Serial.print("Version ");
     Serial.println(VERSION);
@@ -340,6 +365,8 @@ void runCmd(char * cmd){
 
 void setup(){
   Serial.begin(115200);
+  pinMode(PIN_RELAY, OUTPUT);
+  pinMode(PIN_RELAY_OFF, OUTPUT);
 }
 
 void loop(){
