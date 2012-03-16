@@ -229,7 +229,7 @@ void listRecord(byte * rec){
       join = true;
     }
     
-    if (rec[i] < 10){
+    if (rec[i] < 16){
       Serial.print('0');
     }
     Serial.print(rec[i], HEX);
