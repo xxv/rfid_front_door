@@ -6,7 +6,8 @@
 #define GRP_IDX 8
 
 // max number of records
-#define REC_MAX 50
+#define REC_MAX 100
+// 50 for 168, 100 for 328
 
 // record status flags
 #define REC_END_OF_RECS 0
