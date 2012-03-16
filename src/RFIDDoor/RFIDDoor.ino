@@ -1,4 +1,5 @@
 #include <EEPROM.h>
+#include <SoftwareSerial.h> 
 
 #define REC_SIZE 9
 #define ID_SIZE 8
@@ -15,9 +16,23 @@
 #define CMD_BUFF_SIZE 64
 
 #define PIN_RELAY 7
-#define PIN_RELAY_OFF 8
+
+#define PIN_STATUS_LED 13
 
 char* VERSION = "0.1";
+
+// RFID reader interface
+uint8_t STATION_ID = 0x0;
+
+byte datlen = 0;
+byte resStatus = 0;
+
+byte idRead[ID_SIZE];
+byte sendData[ID_SIZE];
+
+uint8_t newId = 0;
+
+SoftwareSerial rfidReader(2, 3);
 
 /**
  * searches all the records for the given
@@ -123,6 +138,13 @@ boolean setGroups(byte * id, byte groups){
   }
   
   return true;
+}
+
+/**
+ * returns true if the id is in the given group
+ */
+boolean checkGroup(byte *id, byte group){
+  return getGroups(id) & group;
 }
 
 /**
@@ -268,21 +290,105 @@ boolean readId(char * idStr, byte * id){
   return true;
 }
 
+void idScanned(uint8_t status, byte* data){
+  if (status != 0){
+    return;
+  }
+  listRecord(data);
+  if (checkGroup(data, 1)){
+    activateRelay();
+  }else{
+    indicateProblem();
+  }
+}
+
+void sendCmd(byte cmd, byte datLen, byte* data){
+  byte bcc = 0;
+  rfidReader.write(0xAA);
+  rfidReader.write(STATION_ID);
+  rfidReader.write(datLen + 1);
+  rfidReader.write(cmd);
+  bcc = STATION_ID ^ (datLen + 1) ^ cmd;
+  for (byte i = 0; i < datLen; i++){
+    bcc ^= data[i];
+    rfidReader.write(data[i]);
+  }
+  rfidReader.write(bcc);
+  rfidReader.write(0xBB);
+}
+
+void readRfidResult(){
+    byte b = blockRead();
+    while (b != 0xAA){
+      b = blockRead();
+    }
+    
+    uint8_t station = blockRead(); // station ID
+
+    datlen = blockRead();
+
+    if (datlen > ID_SIZE){
+      datlen = ID_SIZE;
+    }
+
+    resStatus = blockRead();
+    newId = 0;
+    for (uint8_t i = 0; i < datlen - 1; i++){
+      b = blockRead();
+      if (idRead[i] != b){
+        newId = 1;
+      }
+      idRead[i] = b;
+    }
+
+    // ensure the rest of the ID data is cleared
+    for (uint8_t i = datlen - 1; i < ID_SIZE; i++){
+      idRead[i] = 0;
+    }
+
+    byte bcc = blockRead();
+
+    if (0xBB == blockRead() && newId){
+      idScanned(resStatus, idRead);
+    }
+}
+
+uint8_t blockRead(){
+  while(!rfidReader.available()){}
+  return rfidReader.read();
+}
+
+void requestId(){
+  sendData[0] = 0x26;
+  sendData[1] = 0;
+  sendCmd(0x25, 2, sendData);
+}
+
+void indicateProblem(){
+  digitalWrite(PIN_STATUS_LED, HIGH);
+  delay(100);
+  digitalWrite(PIN_STATUS_LED, LOW);
+  delay(100);
+  digitalWrite(PIN_STATUS_LED, HIGH);
+  delay(100);
+  digitalWrite(PIN_STATUS_LED, LOW);
+  delay(100);
+  digitalWrite(PIN_STATUS_LED, HIGH);
+  delay(100);
+  digitalWrite(PIN_STATUS_LED, LOW);
+  delay(100);
+}
+
 void activateRelay(){
 
   // latch the relay on
   digitalWrite(PIN_RELAY, HIGH);
+  digitalWrite(PIN_STATUS_LED, HIGH);
 
-  delay(200);
+  delay(1000);
 
   digitalWrite(PIN_RELAY, LOW);
-
-  delay(2000);
-
-  // reset the relay (latching)
-  digitalWrite(PIN_RELAY_OFF, HIGH);
-  delay(200);
-  digitalWrite(PIN_RELAY_OFF, LOW);
+  digitalWrite(PIN_STATUS_LED, LOW);
 
 }
 
@@ -365,8 +471,9 @@ void runCmd(char * cmd){
 
 void setup(){
   Serial.begin(115200);
+  rfidReader.begin(9600);
   pinMode(PIN_RELAY, OUTPUT);
-  pinMode(PIN_RELAY_OFF, OUTPUT);
+  pinMode(PIN_STATUS_LED, OUTPUT);
 }
 
 void loop(){
@@ -385,7 +492,10 @@ void loop(){
         default:
         cmd[cmdIdx] = c;
         cmdIdx++;
+      }
     }
-  }
+  }else{
+    requestId();
+    readRfidResult();
   }
 }
