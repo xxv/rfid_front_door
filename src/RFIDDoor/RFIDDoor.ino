@@ -300,6 +300,9 @@ boolean readId(char * idStr, byte * id){
   return true;
 }
 
+/**
+ * called when an RFID is scanned
+ */
 void idScanned(uint8_t status, byte* data){
   if (status != 0){
     return;
@@ -312,6 +315,9 @@ void idScanned(uint8_t status, byte* data){
   }
 }
 
+/**
+ * send a command to the RFID reader
+ */
 void sendCmd(byte cmd, byte datLen, byte* data){
   byte bcc = 0;
   rfidReader.write(0xAA);
@@ -327,6 +333,9 @@ void sendCmd(byte cmd, byte datLen, byte* data){
   rfidReader.write(0xBB);
 }
 
+/**
+ * read the results from the RFID request command
+ */
 void readRfidResult(){
     byte b = blockRead();
     while (b != 0xAA){
@@ -494,6 +503,7 @@ void loop(){
       switch (c){
         case '\n':
         case '\r':
+        // make sure the command is null-terminated
         cmd[cmdIdx] = 0;
         runCmd(cmd);
         cmdIdx = 0;
