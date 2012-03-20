@@ -326,7 +326,7 @@ void readRfidResult(){
     
     uint8_t station = blockRead(); // station ID
 
-    datlen = blockRead();
+    datlen = blockRead() - 1;
 
     if (datlen > ID_SIZE){
       datlen = ID_SIZE;
@@ -334,7 +334,7 @@ void readRfidResult(){
 
     resStatus = blockRead();
     newId = 0;
-    for (uint8_t i = 0; i < datlen - 1; i++){
+    for (uint8_t i = ID_SIZE - datlen; i < ID_SIZE; i++){
       b = blockRead();
       if (idRead[i] != b){
         newId = 1;
@@ -343,7 +343,7 @@ void readRfidResult(){
     }
 
     // ensure the rest of the ID data is cleared
-    for (uint8_t i = datlen - 1; i < ID_SIZE; i++){
+    for (uint8_t i = 0; i < ID_SIZE - datlen; i++){
       idRead[i] = 0;
     }
 
