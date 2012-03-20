@@ -108,7 +108,9 @@ byte getGroups(byte * id){
  * id is a pointer to the ID of size ID_SIZE.
  * If there are no entries for the given ID, adds a new one.
  * 
- * Returns true of group setting was successful. False indicates that storage is full.
+ * Returns true of group setting was successful. False indicates
+ * that storage is full or the record wasn't found and groups
+ * was REC_REUSE.
  */
 boolean setGroups(byte * id, byte groups){
   byte rec[REC_SIZE];
@@ -116,6 +118,10 @@ boolean setGroups(byte * id, byte groups){
   int pos = findId(id, rec);
   
   if (pos == NOT_FOUND){
+    if (groups == REC_REUSE){
+      return false;
+    }
+
     // a new record
     pos = findEmptyIndex();
     
@@ -247,7 +253,6 @@ boolean readId(char * idStr, byte * id){
   int idIdx = 0;
   int len = strlen(idStr);
 
-
   // first count digits
   int digits = 0;
   for (int i = 0; i < len; i++){
@@ -259,6 +264,10 @@ boolean readId(char * idStr, byte * id){
       default:
         digits++;
     }
+  }
+
+  if (digits == 0){
+    return false;
   }
 
   int zeroPad = ID_SIZE - digits / 2;
