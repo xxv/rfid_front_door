@@ -28,6 +28,14 @@ uint8_t STATION_ID = 0x0;
 byte datlen = 0;
 byte resStatus = 0;
 
+#define RFID_READ_FREQUENCY 1000
+#define RFID_READ_BUFF 64
+
+byte rfidReadBuff[RFID_READ_BUFF];
+uint8_t rfidReadIdx = 0;
+uint8_t rfidBytesLeft = 0;
+boolean isInPacket = 0;
+
 byte idRead[ID_SIZE];
 byte sendData[ID_SIZE];
 
@@ -337,27 +345,21 @@ void sendCmd(byte cmd, byte datLen, byte* data){
  * read the results from the RFID request command
  */
 void readRfidResult(){
-    byte b = blockRead();
-    while (b != 0xAA){
-      b = blockRead();
-    }
-    
-    uint8_t station = blockRead(); // station ID
-
-    datlen = blockRead() - 1;
+    uint8_t datlen = rfidReadBuff[2] - 1;
 
     if (datlen > ID_SIZE){
       datlen = ID_SIZE;
     }
 
-    resStatus = blockRead();
+    resStatus = rfidReadBuff[3];
     newId = 0;
-    for (uint8_t i = ID_SIZE - datlen; i < ID_SIZE; i++){
-      b = blockRead();
-      if (idRead[i] != b){
+    uint8_t offset = ID_SIZE - datlen;
+    for (uint8_t i = 0; i < datlen; i++){
+      byte b = rfidReadBuff[4 + i];
+      if (idRead[i + offset] != b){
         newId = 1;
       }
-      idRead[i] = b;
+      idRead[i + offset] = b;
     }
 
     // ensure the rest of the ID data is cleared
@@ -365,16 +367,44 @@ void readRfidResult(){
       idRead[i] = 0;
     }
 
-    byte bcc = blockRead();
-
-    if (0xBB == blockRead() && newId){
+    if (newId){
       idScanned(resStatus, idRead);
     }
 }
 
-uint8_t blockRead(){
-  while(!rfidReader.available()){}
-  return rfidReader.read();
+uint8_t pktDataSize = 0;
+uint8_t readReset = 0;
+
+void rfidRead(){
+  if (rfidReader.available()){
+    if (rfidReadIdx < RFID_READ_BUFF){
+      byte b = rfidReader.read();
+      if (rfidReadIdx == 0 && b == 0xAA){
+        rfidBytesLeft = 4;
+        isInPacket = 1;
+      }
+      if (isInPacket){
+        rfidReadBuff[rfidReadIdx] = b;
+        if (rfidReadIdx == 2){ // dataLength
+          rfidBytesLeft += b;
+        }
+        rfidReadIdx++;
+        rfidBytesLeft--;
+
+        if (rfidBytesLeft == 0){
+          readRfidResult();
+          isInPacket = 0;
+          rfidReadIdx = 0;
+        }
+      }
+    }
+  } else if (rfidReadIdx == RFID_READ_BUFF){
+    readReset++;
+    if (readReset > 10){
+      rfidReadIdx = 0;
+      readReset = 0;
+    }
+  }
 }
 
 void requestId(){
@@ -495,6 +525,8 @@ void setup(){
   pinMode(PIN_STATUS_LED, OUTPUT);
 }
 
+int sendDelay = 0;
+
 void loop(){
   if (Serial.available()){
     if (cmdIdx != CMD_BUFF_SIZE - 1){
@@ -514,8 +546,10 @@ void loop(){
         cmdIdx++;
       }
     }
-  }else{
-    requestId();
-    readRfidResult();
   }
+  if (!isInPacket && sendDelay == 0){
+    requestId();
+  }
+  sendDelay = (sendDelay + 1) % RFID_READ_FREQUENCY;
+  rfidRead();
 }
