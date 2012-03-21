@@ -1,5 +1,5 @@
 #include <EEPROM.h>
-#include <SoftwareSerial.h> 
+#include <AltSoftSerial.h> 
 
 #define REC_SIZE 9
 #define ID_SIZE 8
@@ -41,7 +41,7 @@ byte sendData[ID_SIZE];
 
 uint8_t newId = 0;
 
-SoftwareSerial rfidReader(2, 3);
+AltSoftSerial rfidReader; // 9,8
 
 /**
  * searches all the records for the given
@@ -326,13 +326,13 @@ void idScanned(uint8_t status, byte* data){
 /**
  * send a command to the RFID reader
  */
-void sendCmd(byte cmd, byte datLen, byte* data){
+void sendRFIDCmd(byte idCmd, byte datLen, byte* data){
   byte bcc = 0;
   rfidReader.write(0xAA);
   rfidReader.write(STATION_ID);
   rfidReader.write(datLen + 1);
-  rfidReader.write(cmd);
-  bcc = STATION_ID ^ (datLen + 1) ^ cmd;
+  rfidReader.write(idCmd);
+  bcc = STATION_ID ^ (datLen + 1) ^ idCmd;
   for (byte i = 0; i < datLen; i++){
     bcc ^= data[i];
     rfidReader.write(data[i]);
@@ -375,27 +375,24 @@ void readRfidResult(){
 uint8_t pktDataSize = 0;
 uint8_t readReset = 0;
 
-void rfidRead(){
-  if (rfidReader.available()){
-    if (rfidReadIdx < RFID_READ_BUFF){
-      byte b = rfidReader.read();
-      if (rfidReadIdx == 0 && b == 0xAA){
-        rfidBytesLeft = 4;
-        isInPacket = 1;
+void rfidRead(byte b){
+  if (rfidReadIdx < RFID_READ_BUFF){
+    if (rfidReadIdx == 0 && b == 0xAA){
+      rfidBytesLeft = 4;
+      isInPacket = 1;
+    }
+    if (isInPacket){
+      rfidReadBuff[rfidReadIdx] = b;
+      if (rfidReadIdx == 2){ // dataLength
+        rfidBytesLeft += b;
       }
-      if (isInPacket){
-        rfidReadBuff[rfidReadIdx] = b;
-        if (rfidReadIdx == 2){ // dataLength
-          rfidBytesLeft += b;
-        }
-        rfidReadIdx++;
-        rfidBytesLeft--;
+      rfidReadIdx++;
+      rfidBytesLeft--;
 
-        if (rfidBytesLeft == 0){
-          readRfidResult();
-          isInPacket = 0;
-          rfidReadIdx = 0;
-        }
+      if (rfidBytesLeft == 0){
+        readRfidResult();
+        isInPacket = 0;
+        rfidReadIdx = 0;
       }
     }
   } else if (rfidReadIdx == RFID_READ_BUFF){
@@ -410,7 +407,7 @@ void rfidRead(){
 void requestId(){
   sendData[0] = 0x26;
   sendData[1] = 0;
-  sendCmd(0x25, 2, sendData);
+  sendRFIDCmd(0x25, 2, sendData);
 }
 
 void indicateProblem(){
@@ -478,7 +475,24 @@ void clear(){
 }
 
 char cmd[CMD_BUFF_SIZE];
-int cmdIdx = 0;
+uint8_t cmdIdx = 0;
+
+void cmdRead(char c){
+  switch (c){
+    case '\n':
+    case '\r':
+    // make sure the command is null-terminated
+    cmd[cmdIdx] = 0;
+    runCmd(cmd);
+    cmdIdx = 0;
+    break;
+    default:
+    if (cmdIdx < (CMD_BUFF_SIZE - 1)){
+      cmd[cmdIdx] = c;
+      cmdIdx++;
+    }
+  }
+}
 
 /**
  * executes the given command.
@@ -533,27 +547,13 @@ int sendDelay = 0;
 
 void loop(){
   if (Serial.available()){
-    if (cmdIdx != CMD_BUFF_SIZE - 1){
-      char c = Serial.read();
-      
-      switch (c){
-        case '\n':
-        case '\r':
-        // make sure the command is null-terminated
-        cmd[cmdIdx] = 0;
-        runCmd(cmd);
-        cmdIdx = 0;
-        break;
-        
-        default:
-        cmd[cmdIdx] = c;
-        cmdIdx++;
-      }
-    }
+    cmdRead(Serial.read());
   }
   if (!isInPacket && sendDelay == 0){
     requestId();
   }
   sendDelay = (sendDelay + 1) % RFID_READ_FREQUENCY;
-  rfidRead();
+  if (rfidReader.available()){
+    rfidRead(rfidReader.read());
+  }
 }
