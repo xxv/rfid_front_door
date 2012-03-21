@@ -428,17 +428,18 @@ void indicateProblem(){
   delay(100);
 }
 
+/**
+ * activates the relay to open the door
+ */
 void activateRelay(){
-
-  // latch the relay on
   digitalWrite(PIN_RELAY, HIGH);
   digitalWrite(PIN_STATUS_LED, HIGH);
 
+  // turn the relay on for 1s
   delay(1000);
 
   digitalWrite(PIN_RELAY, LOW);
   digitalWrite(PIN_STATUS_LED, LOW);
-
 }
 
 /**
@@ -454,6 +455,9 @@ void addCmd(char * args){
   }
 }
 
+/**
+ * handle the delete command
+ */
 void delCmd(char * args){
   byte id[ID_SIZE];
 
