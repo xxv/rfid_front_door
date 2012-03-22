@@ -75,6 +75,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mLoadingView = (ProgressBar) findViewById(R.id.loading);
 		findViewById(R.id.connect).setOnClickListener(this);
 		findViewById(R.id.add).setOnClickListener(this);
+		findViewById(R.id.open).setOnClickListener(this);
 
 		mUidTextView.setOnClickListener(this);
 		mUidIntTextView.setOnClickListener(this);
@@ -154,6 +155,12 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			case R.id.add:
 				if (mArduinoService != null) {
 					mArduinoService.requestSetGroup(mRecord);
+				}
+				break;
+
+			case R.id.open:
+				if (mArduinoService != null) {
+					mArduinoService.requestOpen();
 				}
 				break;
 		}
