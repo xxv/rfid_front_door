@@ -25,7 +25,6 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -65,10 +64,8 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 	private static final int REQUEST_PAIR = 100, REQUEST_BT_ENABLE = 101, REQUEST_BT_DEVICE = 102;
 
-	/** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -140,8 +137,6 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		super.onResume();
 
 		mAdapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray, techListsArray);
-
-
 	}
 
 	@Override
