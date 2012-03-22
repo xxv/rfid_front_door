@@ -179,7 +179,7 @@ public class ArduinoConnectService extends Service {
 		sendCommand("l");
 	}
 
-	public void deleteId(RfidRecord record) {
+	public void requestDeleteId(RfidRecord record) {
 		sendCommand("d " + record.toIdString());
 	}
 

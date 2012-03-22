@@ -248,7 +248,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		final RfidRecord rfid = mArrayAdapter.getItem(info.position);
 		switch (item.getItemId()) {
 			case R.id.delete:
-				mArduinoService.deleteId(rfid);
+				mArduinoService.requestDeleteId(rfid);
 				return true;
 
 			default:
@@ -322,7 +322,6 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 		mArduinoService.setResultListener(mResultListener);
 		mArduinoService.connect();
-
 
 	}
 
