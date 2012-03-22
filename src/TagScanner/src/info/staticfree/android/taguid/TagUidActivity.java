@@ -380,6 +380,12 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			mArduinoService.requestIdList();
 
 		}
+
+		@Override
+		public void onOpenResult() {
+			Toast.makeText(TagUidActivity.this, R.string.door_open_result, Toast.LENGTH_SHORT)
+					.show();
+		}
 	};
 
 }

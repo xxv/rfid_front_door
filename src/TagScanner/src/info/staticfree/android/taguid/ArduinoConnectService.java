@@ -160,9 +160,12 @@ public class ArduinoConnectService extends Service {
 			case CMD_DEL:
 				mResultListener.onDeleteResult(true);
 				break;
+
+			case CMD_OPEN:
+				mResultListener.onOpenResult();
+				break;
 		}
 	}
-
 
 	public void requestVersion() {
 		sendCommand("v");

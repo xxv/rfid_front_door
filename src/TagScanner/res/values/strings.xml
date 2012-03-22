@@ -9,5 +9,6 @@
     <string name="add">Add</string>
     <string name="open">Open</string>
     <string name="delete">Delete</string>
+    <string name="door_open_result">Door opened</string>
 
 </resources>

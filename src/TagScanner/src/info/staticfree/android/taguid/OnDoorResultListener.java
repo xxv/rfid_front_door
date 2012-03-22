@@ -12,4 +12,7 @@ public interface OnDoorResultListener {
 	public void onDeleteResult(boolean result);
 
 	public void onStateChange(int state);
+
+	public void onOpenResult();
+
 }
