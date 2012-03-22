@@ -40,24 +40,12 @@ public class ArduinoConnectService extends Service {
 			STATE_READING_RESPONSE = 2;
 	private int mState = STATE_READY;
 
-	private int mCmd = 0;
+	private char mCmd = 0;
 
-	private static final int CMD_VER = 100, CMD_LIST = 101, CMD_SET_GROUP = 102, CMD_DEL = 103;
+	private static final char CMD_VER = 'v', CMD_LIST = 'l', CMD_SET_GROUP = 'a', CMD_DEL = 'd',
+			CMD_OPEN = 'r';
 
-	private final Queue<QueueItem> mSendQueue = new ConcurrentLinkedQueue<QueueItem>();
-
-	private static class QueueItem {
-
-		final String mCmd;
-		final int mCmdId;
-
-		public QueueItem(String cmd, int cmdId) {
-			mCmd = cmd;
-			mCmdId = cmdId;
-		}
-
-	}
-
+	private final Queue<String> mSendQueue = new ConcurrentLinkedQueue<String>();
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -133,9 +121,9 @@ public class ArduinoConnectService extends Service {
 			mState = STATE_READY;
 			mCmdResults.clear();
 
-			final QueueItem q = mSendQueue.poll();
-			if (q != null) {
-				sendCommand(q.mCmd, q.mCmdId);
+			final String cmd = mSendQueue.poll();
+			if (cmd != null) {
+				sendCommand(cmd);
 			}
 
 		} else {
@@ -172,18 +160,22 @@ public class ArduinoConnectService extends Service {
 
 
 	public void requestVersion() {
-		sendCommand("v", CMD_VER);
+		sendCommand("v");
+	}
+
+	public void requestOpen() {
+		sendCommand("r");
 	}
 
 	public void requestIdList() {
-		sendCommand("l", CMD_LIST);
+		sendCommand("l");
 	}
 
 	public void requestSetGroup(Record r){
-		sendCommand("a" + r.toIdString(), CMD_SET_GROUP);
+		sendCommand("a" + r.toIdString());
 	}
 
-	private void onCmdSent(int cmdId) {
+	private void onCmdSent(char cmdId) {
 		switch (cmdId) {
 			case CMD_SET_GROUP:
 				mRecords = new LinkedList<ArduinoConnectService.Record>();
@@ -191,14 +183,15 @@ public class ArduinoConnectService extends Service {
 		}
 	}
 
-	private void sendCommand(String command, int cmdId) {
+	private void sendCommand(String command) {
+		final char cmdId = command.charAt(0);
 		if (mState == STATE_READY) {
 			mCmd = cmdId;
 			mBluetoothService.write((command + "\n").getBytes());
 			onCmdSent(cmdId);
 			mState = STATE_WAITING_FOR_RESPONSE;
 		} else {
-			mSendQueue.add(new QueueItem(command, cmdId));
+			mSendQueue.add(command);
 		}
 	}
 
