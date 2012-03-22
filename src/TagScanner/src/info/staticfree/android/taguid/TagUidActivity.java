@@ -1,7 +1,5 @@
 package info.staticfree.android.taguid;
 
-import info.staticfree.android.taguid.ArduinoConnectService.RFIDoor;
-import info.staticfree.android.taguid.ArduinoConnectService.Record;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -55,11 +53,11 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	private ArduinoConnectService mArduinoService;
 
 	private ListView mList;
-	private ArrayAdapter<Record> mArrayAdapter;
+	private ArrayAdapter<RfidRecord> mArrayAdapter;
 
 	private ProgressBar mLoadingView;
 
-	private Record mRecord;
+	private RfidRecord mRfidRecord;
 
 	private static final int REQUEST_PAIR = 100, REQUEST_BT_ENABLE = 101, REQUEST_BT_DEVICE = 102;
 
@@ -81,7 +79,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mUidIntTextView.setOnClickListener(this);
 
 		mList = (ListView) findViewById(android.R.id.list);
-		mArrayAdapter = new ArrayAdapter<ArduinoConnectService.Record>(this,
+		mArrayAdapter = new ArrayAdapter<RfidRecord>(this,
 				android.R.layout.simple_list_item_1);
 		// mList.setAdapter(mArrayAdapter);
 
@@ -154,7 +152,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 			case R.id.add:
 				if (mArduinoService != null) {
-					mArduinoService.requestSetGroup(mRecord);
+					mArduinoService.requestSetGroup(mRfidRecord);
 				}
 				break;
 
@@ -216,33 +214,19 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	}
 
 	private void showUid(byte[] uid) {
-		mUidTextView.setText(toUidString(uid));
+		final RfidRecord r = new RfidRecord(0, uid);
+
+		mUidTextView.setText(r.toIdString());
 		final byte[] unsigned = new byte[uid.length + 1];
 
 		System.arraycopy(uid, 0, unsigned, 1, uid.length);
 		mUidIntTextView.setText(new BigInteger(unsigned).toString());
 
-		mRecord = new Record();
-		mRecord.id = uid;
-		mRecord.groups = 1;
+		mRfidRecord = new RfidRecord();
+		mRfidRecord.id = uid;
+		mRfidRecord.groups = 1;
 		findViewById(R.id.add).setEnabled(true);
 	}
-
-	private String toUidString(byte[] uid) {
-    	final StringBuilder sb = new StringBuilder();
-		boolean first = true;
-		for (final byte b : uid) {
-			if (!first) {
-				sb.append(':');
-			}
-			if ((b & 0xff) < 0x10) {
-				sb.append('0');
-			}
-			sb.append(Long.toString(b & 0xff, 16));
-			first = false;
-    	}
-		return sb.toString();
-    }
 
 	private void copyTextToClipboard(int textViewId) {
 		final TextView tv = (TextView) findViewById(textViewId);
@@ -304,7 +288,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mArduinoService = null;
 	}
 
-	private final ArduinoConnectService.RFIDoor mResultListener = new RFIDoor() {
+	private final OnDoorResultListener mResultListener = new OnDoorResultListener() {
 
 		@Override
 		public void onReceiveVersion(String version) {
@@ -313,10 +297,11 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		}
 
 		@Override
-		public void onReceiveRecords(List<Record> records) {
+		public void onReceiveRecords(List<RfidRecord> rfidRecords) {
 
-			mList.setAdapter(new ArrayAdapter<Record>(TagUidActivity.this,
-					android.R.layout.simple_list_item_1, records));
+			mArrayAdapter = new ArrayAdapter<RfidRecord>(TagUidActivity.this,
+					android.R.layout.simple_list_item_1, rfidRecords);
+			mList.setAdapter(mArrayAdapter);
 
 		}
 

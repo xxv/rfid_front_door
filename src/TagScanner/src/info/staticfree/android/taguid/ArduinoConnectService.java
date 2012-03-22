@@ -87,17 +87,17 @@ public class ArduinoConnectService extends Service {
 		}
 	}
 
-	private List<Record> mRecords = new LinkedList<ArduinoConnectService.Record>();
+	private final List<RfidRecord> mRfidRecords = new LinkedList<RfidRecord>();
 
 	private static final Pattern REC_FORMAT = Pattern.compile("(\\d)\t([A-Fa-f0-9:]+)");
 
 
-	private Record parseRecord(String recLine) {
+	private RfidRecord parseRecord(String recLine) {
 		final Matcher m = REC_FORMAT.matcher(recLine);
 		if (!m.matches()) {
 			return null;
 		}
-		final Record r = new Record();
+		final RfidRecord r = new RfidRecord();
 		r.groups = Integer.valueOf(m.group(1));
 		final String hexString = m.group(2);
 
@@ -139,13 +139,14 @@ public class ArduinoConnectService extends Service {
 				break;
 
 			case CMD_LIST: {
+				mRfidRecords.clear();
 				for (final String msg : mCmdResults) {
-					final Record r = parseRecord(msg);
+					final RfidRecord r = parseRecord(msg);
 					if (r != null) {
 
-						mRecords.add(r);
+						mRfidRecords.add(r);
 					} else {
-						mResultListener.onReceiveRecords(mRecords);
+						mResultListener.onReceiveRecords(mRfidRecords);
 						break;
 					}
 				}
@@ -178,7 +179,7 @@ public class ArduinoConnectService extends Service {
 	private void onCmdSent(char cmdId) {
 		switch (cmdId) {
 			case CMD_SET_GROUP:
-				mRecords = new LinkedList<ArduinoConnectService.Record>();
+
 				break;
 		}
 	}
@@ -246,47 +247,9 @@ public class ArduinoConnectService extends Service {
 		};
 	};
 
-	private RFIDoor mResultListener;
+	private OnDoorResultListener mResultListener;
 
-	public void setResultListener(RFIDoor resultListener) {
+	public void setResultListener(OnDoorResultListener resultListener) {
 		mResultListener = resultListener;
-	}
-
-	public static class Record {
-		int groups;
-		byte[] id;
-
-		public String toIdString() {
-			final StringBuilder sb = new StringBuilder();
-			boolean sep = false;
-			for (final byte b : id) {
-				if (sep) {
-					sb.append(':');
-				} else {
-					sep = true;
-				}
-
-				sb.append(String.format("%02x", b));
-			}
-
-			return sb.toString();
-		}
-
-		@Override
-		public String toString() {
-			return toIdString();
-		}
-	}
-
-	public static interface RFIDoor {
-		public void onReceiveRecords(List<Record> records);
-
-		public void onReceiveVersion(String version);
-
-		public void onSetGroupResult(boolean result);
-
-		public void onDeleteResult(boolean result);
-
-		public void onStateChange(int state);
 	};
 }
