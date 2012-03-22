@@ -43,11 +43,6 @@ public class BluetoothService {
     private static final String TAG = "BluetoothService";
     private static final boolean D = true;
 
-    // Name for the SDP record when creating server socket
-	private static final String NAME = "TagScanner";
-
-    // Unique UUID for this application
-	private static final UUID MY_UUID = UUID.fromString("dcbd7d96-6027-11e1-9041-3326128ce6ed");
     private static final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
 
