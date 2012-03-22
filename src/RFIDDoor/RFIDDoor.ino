@@ -315,7 +315,6 @@ void idScanned(uint8_t status, byte* data){
   if (status != 0){
     return;
   }
-  listRecord(data);
   if (checkGroup(data, 1)){
     activateRelay();
   }else{
