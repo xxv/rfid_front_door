@@ -156,6 +156,10 @@ public class ArduinoConnectService extends Service {
 			case CMD_SET_GROUP:
 				mResultListener.onSetGroupResult(true);
 				break;
+
+			case CMD_DEL:
+				mResultListener.onDeleteResult(true);
+				break;
 		}
 	}
 
@@ -172,7 +176,11 @@ public class ArduinoConnectService extends Service {
 		sendCommand("l");
 	}
 
-	public void requestSetGroup(Record r){
+	public void deleteId(RfidRecord record) {
+		sendCommand("d " + record.toIdString());
+	}
+
+	public void requestSetGroup(RfidRecord r){
 		sendCommand("a" + r.toIdString());
 	}
 

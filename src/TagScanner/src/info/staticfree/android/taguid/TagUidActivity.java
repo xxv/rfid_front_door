@@ -20,9 +20,13 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -104,6 +108,8 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+		registerForContextMenu(mList);
     }
 
 	@Override
@@ -211,6 +217,44 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			final Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 			showUid(tag.getId());
 		}
+	}
+
+    @Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		AdapterView.AdapterContextMenuInfo info;
+		try {
+			info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+		} catch (final ClassCastException e) {
+			// Log.e(TAG, "bad menuInfo", e);
+			return;
+		}
+
+		final RfidRecord item = mArrayAdapter.getItem(info.position);
+
+		getMenuInflater().inflate(R.menu.rfid_context, menu);
+		menu.setHeaderTitle(item.toIdString());
+	}
+
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterView.AdapterContextMenuInfo info;
+		try {
+			info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+		} catch (final ClassCastException e) {
+			// Log.e(TAG, "bad menuInfo", e);
+			return false;
+		}
+
+		final RfidRecord rfid = mArrayAdapter.getItem(info.position);
+		switch (item.getItemId()) {
+			case R.id.delete:
+				mArduinoService.deleteId(rfid);
+				return true;
+
+			default:
+				return super.onContextItemSelected(item);
+		}
+
 	}
 
 	private void showUid(byte[] uid) {
