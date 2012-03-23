@@ -47,6 +47,8 @@ char* VERSION = "0.2";
 
 uint8_t curGroup = DEFAULT_GRP;
 
+boolean addNext = false;
+
 // RFID reader interface
 uint8_t STATION_ID = 0x0;
 
@@ -362,14 +364,23 @@ uint8_t getCurGroup(){
 /**
  * called when an RFID is scanned
  */
-void idScanned(uint8_t status, byte* data){
+void idScanned(uint8_t status, byte* id){
   if (status != 0){
     return;
   }
-  if (checkGroup(data, getCurGroup())){
-    activateRelay();
+  if (addNext){
+    if (addIdToCurrentGroup(id)){
+      indicateSuccess();
+    }else{
+      indicateProblem();
+    }
+    addNext = false;
   }else{
-    indicateProblem();
+    if (checkGroup(id, getCurGroup())){
+      activateRelay();
+    }else{
+      indicateProblem();
+    }
   }
 }
 
@@ -460,6 +471,18 @@ void requestId(){
   sendRFIDCmd(0x25, 2, sendData);
 }
 
+void indicateSuccess(){
+
+  digitalWrite(PIN_STATUS_LED, HIGH);
+  delay(500);
+  digitalWrite(PIN_STATUS_LED, LOW);
+  delay(100);
+  digitalWrite(PIN_STATUS_LED, HIGH);
+  delay(500);
+  digitalWrite(PIN_STATUS_LED, LOW);
+  delay(100);
+}
+
 void indicateProblem(){
   digitalWrite(PIN_STATUS_LED, HIGH);
   delay(100);
@@ -489,6 +512,11 @@ void activateRelay(){
   digitalWrite(PIN_STATUS_LED, LOW);
 }
 
+boolean addIdToCurrentGroup(byte * id){
+  uint8_t groups = getGroups(id);
+  return setGroups(id, groups | (1 << (getCurGroup() - 1)));
+}
+
 /**
  * adds the ID to the current group
  */
@@ -498,14 +526,18 @@ void addCmd(char * args){
   boolean success = false;
 
   if (readId(args, id)){
-    uint8_t groups = getGroups(id);
-    success = setGroups(id, groups | (1 << (getCurGroup() - 1)));
+    success = addIdToCurrentGroup(id);
   }
   if (success){
     Serial.println("ID added to current group");
   }else{
     Serial.println("error setting groups for ID");
   }
+}
+
+boolean removeIdFromCurrentGroup(byte * id){
+  uint8_t groups = getGroups(id);
+  return setGroups(id, groups & ~(1 << (getCurGroup() - 1)));
 }
 
 /**
@@ -516,8 +548,7 @@ void removeCmd(char * args){
   boolean success = false;
 
   if (readId(args, id)){
-    uint8_t groups = getGroups(id);
-    success = setGroups(id, groups & ~(1 << (getCurGroup() - 1)));
+    success = removeIdFromCurrentGroup(id);
   }
   if (success){
     Serial.println("ID removed from current group");
@@ -603,6 +634,11 @@ void runCmd(char * cmd){
     
     case 'a':
     addCmd(cmd + 1);
+    break;
+
+    case 'A':
+    addNext = true;
+    Serial.println("The next card scanned will be added to the current group");
     break;
     
     case 'd':
