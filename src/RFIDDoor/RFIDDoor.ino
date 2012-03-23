@@ -1,26 +1,51 @@
 #include <EEPROM.h>
 #include <AltSoftSerial.h> 
 
-#define REC_SIZE 9
+// each ID is truncated to exactly ID_SIZE bytes.
 #define ID_SIZE 8
-#define GRP_IDX 8
+
+// the IDs are stored in records along with their groups
+// this should be ID_SIZE + 1
+#define REC_SIZE 9
+
+// the index into the record that stores the groups
+#define GRPS_IDX 8
+
+// a group is an integer between 1 and GRP_MAX
+#define GRP_MAX 7
 
 // max number of records
+// 50 for mega168, 100 for mega328
 #define REC_MAX 100
-// 50 for 168, 100 for 328
+
+// offset for storing non-record data
+#define REC_OFFSET 32
+
+// this group will be set if the power's cycled
+#define DEFAULT_GRP 1
 
 // record status flags
+// any empty memory should be set to 0
 #define REC_END_OF_RECS 0
+
+// a record is marked for reuse. This makes the last bit
+// unusable for groups.
 #define REC_REUSE 0xff
 
+// return value when a record can't be found
 #define NOT_FOUND -1
+
+// buffer size for the command. Commands are truncated to this.
 #define CMD_BUFF_SIZE 64
 
+// the Arduino pin with the relay
 #define PIN_RELAY 7
 
 #define PIN_STATUS_LED 13
 
-char* VERSION = "0.1";
+char* VERSION = "0.2";
+
+uint8_t curGroup = DEFAULT_GRP;
 
 // RFID reader interface
 uint8_t STATION_ID = 0x0;
@@ -56,10 +81,10 @@ int findId(byte * id, byte * buf){
   for (i = 0; i < REC_MAX; i++){
     getRFID(i, buf);
     
-    if (REC_REUSE == buf[GRP_IDX]){
+    if (REC_REUSE == buf[GRPS_IDX]){
       continue;
       
-    }else if(REC_END_OF_RECS == buf[GRP_IDX]){
+    }else if(REC_END_OF_RECS == buf[GRPS_IDX]){
       break;
     }
     
@@ -108,7 +133,7 @@ byte getGroups(byte * id){
   
   int res = findId(id, rec);
   
-  return res != NOT_FOUND ? rec[GRP_IDX] : 0;
+  return res != NOT_FOUND ? rec[GRPS_IDX] : 0;
 }
 
 /**
@@ -116,7 +141,7 @@ byte getGroups(byte * id){
  * id is a pointer to the ID of size ID_SIZE.
  * If there are no entries for the given ID, adds a new one.
  * 
- * Returns true of group setting was successful. False indicates
+ * Returns true of groups setting was successful. False indicates
  * that storage is full or the record wasn't found and groups
  * was REC_REUSE.
  */
@@ -143,12 +168,12 @@ boolean setGroups(byte * id, byte groups){
     for (int i = 0; i < ID_SIZE; i++){
       rec[i] = id[i];
     }
-    rec[GRP_IDX] = groups;
+    rec[GRPS_IDX] = groups;
     
     setRecord(pos, rec);
     
   }else{
-    Serial.println("1\tsetting group for existing record");
+    Serial.println("1\tsetting groups for existing record");
     setGroupsAtIndex(pos, groups);
   }
   
@@ -158,31 +183,34 @@ boolean setGroups(byte * id, byte groups){
 /**
  * returns true if the id is in the given group
  */
-boolean checkGroup(byte *id, byte group){
-  return getGroups(id) & group;
+boolean checkGroup(byte *id, uint8_t group){
+  if (group > GRP_MAX || group == 0){
+    return false;
+  }
+  return getGroups(id) & (1 << (group - 1));
 }
 
 /**
  * gets the groups at the given index
  */
 byte getGroupsAtIndex(int index){
-  int offset = REC_SIZE * index;
-  return EEPROM.read(offset + GRP_IDX);  
+  int offset = REC_SIZE * index + REC_OFFSET;
+  return EEPROM.read(offset + GRPS_IDX);  
 }
 
 /**
  * sets the groups for the given index
  */
 void setGroupsAtIndex(int index, byte groups){
-  int offset = REC_SIZE * index;
-  EEPROM.write(offset + GRP_IDX, groups);
+  int offset = REC_SIZE * index + REC_OFFSET;
+  EEPROM.write(offset + GRPS_IDX, groups);
 }
 
 /**
  * stores the record at the given index
  */
 void setRecord (int index, byte * rec){
-  int offset = REC_SIZE * index;
+  int offset = REC_SIZE * index + REC_OFFSET;
   for (int i = 0; i < REC_SIZE; i++){
     EEPROM.write(i + offset, rec[i]);
   }
@@ -193,7 +221,7 @@ void setRecord (int index, byte * rec){
  * buf must be a size of size REC_SIZE
  */
 void getRFID (int index, byte * rec){
-  int offset = REC_SIZE * index;
+  int offset = REC_SIZE * index + REC_OFFSET;
   for (int i = 0; i < REC_SIZE; i++){
     byte b = EEPROM.read(i + offset);
     rec[i] = b;
@@ -211,7 +239,7 @@ void listRecords(){
   boolean hasMore = true;
   for (i = 0; i < REC_MAX && hasMore; i++){
     getRFID(i, rec);
-    switch (rec[GRP_IDX]){
+    switch (rec[GRPS_IDX]){
       case REC_END_OF_RECS:
         hasMore = false;
         break;
@@ -233,7 +261,7 @@ void listRecords(){
  * list the given record
  */
 void listRecord(byte * rec){
-  Serial.print(rec[GRP_IDX]);
+  Serial.print(rec[GRPS_IDX]);
   Serial.print('\t');
   boolean join = false;
   for (int i = 0; i < ID_SIZE; i++){
@@ -309,13 +337,36 @@ boolean readId(char * idStr, byte * id){
 }
 
 /**
+ * sets the currently active group
+ * 
+ * group is a bitmask of groups
+ */
+boolean setCurGroup(uint8_t group){
+  if (group <= GRP_MAX){
+    curGroup = group;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * gets the currently active group
+ */
+uint8_t getCurGroup(){
+  if (curGroup > GRP_MAX){
+    return 0;
+  }
+  return curGroup;
+}
+
+/**
  * called when an RFID is scanned
  */
 void idScanned(uint8_t status, byte* data){
   if (status != 0){
     return;
   }
-  if (checkGroup(data, 1)){
+  if (checkGroup(data, getCurGroup())){
     activateRelay();
   }else{
     indicateProblem();
@@ -439,20 +490,45 @@ void activateRelay(){
 }
 
 /**
- * handle the add command
+ * adds the ID to the current group
  */
 void addCmd(char * args){
   byte id[ID_SIZE];
 
-  if (readId(args, id) && setGroups(id, 1)){
-    Serial.println("groups set for ID");
+  boolean success = false;
+
+  if (readId(args, id)){
+    uint8_t groups = getGroups(id);
+    success = setGroups(id, groups | (1 << (getCurGroup() - 1)));
+  }
+  if (success){
+    Serial.println("ID added to current group");
   }else{
     Serial.println("error setting groups for ID");
   }
 }
 
 /**
- * handle the delete command
+ * removes the ID from the current group
+ */
+void removeCmd(char * args){
+  byte id[ID_SIZE];
+  boolean success = false;
+
+  if (readId(args, id)){
+    uint8_t groups = getGroups(id);
+    success = setGroups(id, groups & ~(1 << (getCurGroup() - 1)));
+  }
+  if (success){
+    Serial.println("ID removed from current group");
+  }else{
+    Serial.println("error setting groups for ID");
+  }
+}
+
+
+/**
+ * deletes the ID from all groups
  */
 void delCmd(char * args){
   byte id[ID_SIZE];
@@ -461,6 +537,23 @@ void delCmd(char * args){
     Serial.println("record deleted");
   }else{
     Serial.println("error deleting record");
+  }
+}
+
+/**
+ * handle the set group command
+ */
+void setGrpCmd(char *args){
+  uint8_t grp;
+  if (strlen(args) > 0){
+    sscanf(args, "%u", &grp);
+    if(setCurGroup(grp)){
+      Serial.println("Group set");
+    }else{
+      Serial.println("Error setting group");
+    }
+  }else{
+    Serial.println(getCurGroup());
   }
 }
 
@@ -517,6 +610,10 @@ void runCmd(char * cmd){
     break;
 
     case 'r':
+    removeCmd(cmd + 1);
+    break;
+
+    case 'o':
       activateRelay();
       break;
 
@@ -524,6 +621,10 @@ void runCmd(char * cmd){
     Serial.print("Version ");
     Serial.println(VERSION);
     break;
+
+    case 'g':
+      setGrpCmd(cmd + 1);
+      break;
 
     case 0:
     // don't need to do anything
