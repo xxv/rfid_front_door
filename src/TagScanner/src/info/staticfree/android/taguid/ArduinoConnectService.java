@@ -89,7 +89,7 @@ public class ArduinoConnectService extends Service {
 
 	private final List<RfidRecord> mRfidRecords = new LinkedList<RfidRecord>();
 
-	private static final Pattern REC_FORMAT = Pattern.compile("(\\d)\t([A-Fa-f0-9:]+)");
+	private static final Pattern REC_FORMAT = Pattern.compile("(\\d+)\t([A-Fa-f0-9:]+)");
 
 
 	private RfidRecord parseRecord(String recLine) {
