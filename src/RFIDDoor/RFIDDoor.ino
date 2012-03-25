@@ -352,7 +352,7 @@ boolean readId(char * idStr, byte * id){
  * group is a bitmask of groups
  */
 boolean setCurGroup(uint8_t group){
-  if (group <= GRP_MAX){
+  if (group <= GRP_MAX && group > 0){
     curGroup = group;
     showCurGroup();
     return true;
