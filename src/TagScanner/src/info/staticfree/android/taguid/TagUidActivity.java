@@ -37,8 +37,10 @@ import android.widget.Toast;
 
 import com.example.android.BluetoothChat.DeviceListActivity;
 
-import edu.mit.mobile.android.greenwheel.BluetoothService;
-
+/**
+ * @author steve
+ *
+ */
 public class TagUidActivity extends Activity implements OnClickListener, ServiceConnection {
 	private static final String TAG = TagUidActivity.class.getSimpleName();
 
@@ -89,7 +91,6 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			@Override
 			public void onItemSelected(AdapterView<?> adapter, View v, int position, long id) {
 				if (mLastSelectedGroup != position) {
-					Log.d(TAG, "item clicked " + position);
 					if (mArduinoService != null) {
 						mArduinoService.requestSetCurGroup(position + 1);
 					}
@@ -99,8 +100,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 			@Override
 			public void onNothingSelected(AdapterView<?> adapter) {
-				// TODO Auto-generated method stub
-
+				// that's fine. Nothing to do...
 			}
 		});
 
@@ -110,7 +110,6 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mList = (ListView) findViewById(android.R.id.list);
 		mArrayAdapter = new ArrayAdapter<RfidRecord>(this,
 				android.R.layout.simple_list_item_1);
-		// mList.setAdapter(mArrayAdapter);
 
 		parseIntent(getIntent());
 
@@ -142,19 +141,6 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		super.onPause();
 
 		mAdapter.disableForegroundDispatch(this);
-	}
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-
-		maybeAutoconnect();
-	}
-
-	@Override
-	protected void onStop() {
-		super.onStop();
-
 		if (mArduinoService != null) {
 			unbindService(this);
 		}
@@ -164,6 +150,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	protected void onResume() {
 		super.onResume();
 
+		maybeAutoconnect();
 		mAdapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray, techListsArray);
 	}
 
@@ -234,9 +221,6 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 				|| NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
 				|| NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) {
 
-			// Parcelable[] rawMsgs =
-			// intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
-
 			final Tag tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 			showUid(tag.getId());
 		}
@@ -248,7 +232,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		try {
 			info = (AdapterView.AdapterContextMenuInfo) menuInfo;
 		} catch (final ClassCastException e) {
-			// Log.e(TAG, "bad menuInfo", e);
+			Log.e(TAG, "bad menuInfo", e);
 			return;
 		}
 
@@ -264,7 +248,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		try {
 			info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
 		} catch (final ClassCastException e) {
-			// Log.e(TAG, "bad menuInfo", e);
+			Log.e(TAG, "bad menuInfo", e);
 			return false;
 		}
 
@@ -308,7 +292,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 
 	/**
-	 * Only autoconnects if Bluetooth is already enabled.
+	 * Only autoconnects if Bluetooth is already enabled and the device has been paired before.
 	 */
 	private void maybeAutoconnect() {
 		if (!mBluetoothAdapter.isEnabled()) {
@@ -323,6 +307,9 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		connectOrPair();
 	}
 
+	/**
+	 * Connects or pairs a device. Will request Bluetooth to be enabled if it's not.
+	 */
 	private void connectOrPair() {
 		if (!mBluetoothAdapter.isEnabled()) {
 			startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),
@@ -336,7 +323,9 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			return;
 		}
 
-		bindService(new Intent(this, ArduinoConnectService.class), this, BIND_AUTO_CREATE);
+		final Intent arduinoService = new Intent(this, ArduinoConnectService.class);
+		startService(arduinoService);
+		bindService(arduinoService, this, 0);
 	}
 
 	@Override
@@ -356,6 +345,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	}
 
 	private final OnDoorResultListener mResultListener = new OnDoorResultListener() {
+		private boolean mFirstLoad = true;
 
 		@Override
 		public void onVersionResult(String version) {
@@ -375,20 +365,23 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		@Override
 		public void onStateChange(int state) {
 			switch (state) {
-				case BluetoothService.STATE_CONNECTED:
-					mLoadingView.setVisibility(View.GONE);
-					findViewById(R.id.connect).setVisibility(View.GONE);
-					mArduinoService.requestIdList();
-					mArduinoService.requestGetCurGroup();
+				case ArduinoConnectService.STATE_READY:
+					// handle the first load
+					if (mFirstLoad) {
+						mLoadingView.setVisibility(View.GONE);
+						findViewById(R.id.connect).setVisibility(View.GONE);
+						mArduinoService.requestIdList();
+						mArduinoService.requestGetCurGroup();
+						mFirstLoad = false;
+					}
 
 					break;
 
-				case BluetoothService.STATE_RECONNECTING:
-				case BluetoothService.STATE_CONNECTING:
+				case ArduinoConnectService.STATE_CONNECTING:
 					mLoadingView.setVisibility(View.VISIBLE);
 					findViewById(R.id.connect).setVisibility(View.GONE);
+					mFirstLoad = true;
 					break;
-
 			}
 
 		}

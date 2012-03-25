@@ -26,6 +26,9 @@ public class ArduinoConnectService extends Service {
 
 	private static final String TAG = ArduinoConnectService.class.getSimpleName();
 
+	// set to true to enable debug logging
+	private static final boolean DEBUG = false;
+
 	public static final String PREF_BT_ADDR = "bt_addr";
 
 	private BluetoothService mBluetoothService;
@@ -36,8 +39,8 @@ public class ArduinoConnectService extends Service {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
-	private static final int STATE_DISCONNECTED = 0, STATE_READY = 1,
-			STATE_WAITING_FOR_RESPONSE = 2, STATE_READING_RESPONSE = 3;
+	public static final int STATE_DISCONNECTED = 100, STATE_CONNECTING = 101, STATE_READY = 200,
+			STATE_WAITING_FOR_RESPONSE = 201, STATE_READING_RESPONSE = 202;
 	private int mState = STATE_DISCONNECTED;
 
 	private char mCmd = 0;
@@ -45,11 +48,24 @@ public class ArduinoConnectService extends Service {
 	private static final char CMD_VER = 'v', CMD_LIST = 'l', CMD_ADD = 'a', CMD_DEL = 'd',
 			CMD_OPEN = 'r', CMD_CUR_GROUP = 'g';
 
+
 	private final Queue<String> mSendQueue = new ConcurrentLinkedQueue<String>();
 
 	@Override
 	public IBinder onBind(Intent intent) {
+
+		cancelSelfDestruct();
 		return mBinder;
+	}
+
+	@Override
+	public void onRebind(Intent intent) {
+		if (DEBUG) {
+			Log.d(TAG, "onRebind");
+		}
+		cancelSelfDestruct();
+		super.onRebind(intent);
+
 	}
 
 	@Override
@@ -62,6 +78,24 @@ public class ArduinoConnectService extends Service {
 		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 	}
 
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+
+		return START_STICKY;
+	}
+
+	@Override
+	public boolean onUnbind(Intent intent) {
+		scheduleSelfDestruct();
+		if (DEBUG) {
+			Log.d(TAG, "onUnbind");
+		}
+		return true;
+	}
+
+	/**
+	 * @return false if the device is already connected or could not be connected to
+	 */
 	public boolean connect() {
 		if (mBluetoothService.getState() != BluetoothService.STATE_NONE) {
 			return false;
@@ -82,6 +116,9 @@ public class ArduinoConnectService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 
+		if (DEBUG) {
+			Log.d(TAG, "onDestroy");
+		}
 		if (mBluetoothService != null) {
 			mBluetoothService.stop();
 		}
@@ -111,22 +148,21 @@ public class ArduinoConnectService extends Service {
 	private final List<String> mCmdResults = new LinkedList<String>();
 
 	private void onRead(String msg) {
-		Log.d(TAG, "just read: " + msg);
-		if (mResultListener == null) {
-			return;
+		if (DEBUG) {
+			Log.d(TAG, "just read: " + msg);
 		}
 
 		if ("".equals(msg)) {
 			onCommandFinished();
 			mCmd = 0;
-			mState = STATE_READY;
+			setState(STATE_READY);
 			mCmdResults.clear();
 
 			sendEnqueued();
 
 		} else {
 			mCmdResults.add(msg);
-			mState = STATE_READING_RESPONSE;
+			setState(STATE_READING_RESPONSE);
 		}
 	}
 
@@ -140,7 +176,9 @@ public class ArduinoConnectService extends Service {
 	private void onCommandFinished() {
 		switch (mCmd){
 			case CMD_VER:
-				mResultListener.onVersionResult(mCmdResults.get(0));
+				if (mResultListener != null) {
+					mResultListener.onVersionResult(mCmdResults.get(0));
+				}
 				break;
 
 			case CMD_LIST: {
@@ -152,7 +190,9 @@ public class ArduinoConnectService extends Service {
 						mRfidRecords.add(r);
 					} else {
 						mHasCopyOfList = true;
-						mResultListener.onListResult(mRfidRecords);
+						if (mResultListener != null) {
+							mResultListener.onListResult(mRfidRecords);
+						}
 						break;
 					}
 				}
@@ -160,19 +200,27 @@ public class ArduinoConnectService extends Service {
 				break;
 
 			case CMD_ADD:
-				mResultListener.onAddResult(true);
+				if (mResultListener != null) {
+					mResultListener.onAddResult(true);
+				}
 				break;
 
 			case CMD_DEL:
-				mResultListener.onDeleteResult(true);
+				if (mResultListener != null) {
+					mResultListener.onDeleteResult(true);
+				}
 				break;
 
 			case CMD_OPEN:
-				mResultListener.onOpenResult();
+				if (mResultListener != null) {
+					mResultListener.onOpenResult();
+				}
 				break;
 
 			case CMD_CUR_GROUP:
+				if (mResultListener != null) {
 				mResultListener.onCurGroupResult(Integer.valueOf(mCmdResults.get(0)));
+				}
 				break;
 		}
 	}
@@ -200,7 +248,9 @@ public class ArduinoConnectService extends Service {
 
 	public boolean requestCachedList() {
 		if (mHasCopyOfList) {
-			mResultListener.onListResult(mRfidRecords);
+			if (mResultListener != null) {
+				mResultListener.onListResult(mRfidRecords);
+			}
 		}
 		return mHasCopyOfList;
 	}
@@ -226,8 +276,11 @@ public class ArduinoConnectService extends Service {
 			mCmd = command;
 			mBluetoothService.write((command + "\n").getBytes());
 			onCmdSent(command);
-			mState = STATE_WAITING_FOR_RESPONSE;
+			setState(STATE_WAITING_FOR_RESPONSE);
 		} else {
+			if (DEBUG) {
+				Log.d(TAG, "enqueued command: " + command);
+			}
 			mSendQueue.add(Character.toString(command));
 		}
 	}
@@ -238,10 +291,22 @@ public class ArduinoConnectService extends Service {
 			mCmd = cmdId;
 			mBluetoothService.write((command + "\n").getBytes());
 			onCmdSent(cmdId);
-			mState = STATE_WAITING_FOR_RESPONSE;
+			setState(STATE_WAITING_FOR_RESPONSE);
 		} else {
+			if (DEBUG) {
+				Log.d(TAG, "enqueued command: " + command);
+			}
 			mSendQueue.add(command);
 		}
+	}
+
+	public int getState() {
+		return mState;
+	}
+
+	private void setState(int state) {
+		mState = state;
+		mHandler.obtainMessage(MSG_STATE_CHANGED, state, 0).sendToTarget();
 	}
 
 	public class LocalBinder extends Binder {
@@ -255,16 +320,23 @@ public class ArduinoConnectService extends Service {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 				case BluetoothService.MESSAGE_STATE_CHANGE: {
-					mResultListener.onStateChange(msg.arg1);
+
 					switch (msg.arg1) {
 						case BluetoothService.STATE_CONNECTED:
-							mState = STATE_READY;
+
+							setState(STATE_READY);
 							Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_SHORT)
 									.show();
 							sendEnqueued();
 							break;
 
 						case BluetoothService.STATE_NONE:
+							setState(STATE_DISCONNECTED);
+							break;
+
+						case BluetoothService.STATE_CONNECTING:
+						case BluetoothService.STATE_RECONNECTING:
+							setState(STATE_CONNECTING);
 							break;
 					}
 
@@ -282,7 +354,9 @@ public class ArduinoConnectService extends Service {
 				case BluetoothService.MESSAGE_WRITE: {
 					final byte[] readBuf = (byte[]) msg.obj;
 					final String readMessage = new String(readBuf, 0, msg.arg1);
-					Log.d(TAG, "just wrote: " + readMessage);
+					if (DEBUG) {
+						Log.d(TAG, "just wrote: " + readMessage);
+					}
 				}
 					break;
 
@@ -297,9 +371,45 @@ public class ArduinoConnectService extends Service {
 		};
 	};
 
+	private void scheduleSelfDestruct() {
+		mHandler.sendEmptyMessageDelayed(MSG_STOP_SELF, 1000 * 5);
+	}
+
+	private void cancelSelfDestruct() {
+		mHandler.removeMessages(MSG_STOP_SELF);
+	}
+
+	private static final int MSG_STOP_SELF = 100, MSG_STATE_CHANGED = 101;
+
+	private final Handler mHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+				case MSG_STOP_SELF:
+					if (DEBUG) {
+						Log.d(TAG, "Stop self");
+					}
+					stopSelf();
+					break;
+
+				case MSG_STATE_CHANGED: {
+					if (mResultListener != null) {
+						mResultListener.onStateChange(msg.arg1);
+					}
+
+				}
+					break;
+			}
+		};
+	};
+
 	private OnDoorResultListener mResultListener;
 
 	public void setResultListener(OnDoorResultListener resultListener) {
 		mResultListener = resultListener;
+		// re-send the ready state so the client knows it's ready.
+		if (mState == STATE_READY) {
+			setState(STATE_READY);
+		}
 	};
 }
