@@ -195,7 +195,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
-		// setIntent(intent);
+
 		parseIntent(intent);
 	}
 
@@ -316,6 +316,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mArduinoService = ((ArduinoConnectService.LocalBinder) service).getService();
 
 		mArduinoService.setResultListener(mResultListener);
+
 		mArduinoService.connect();
 
 	}

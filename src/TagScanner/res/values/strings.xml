@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, TagUidActivity!</string>
-    <string name="app_name">TagUid</string>
+    <string name="app_name">RFIDoor</string>
     <string name="scan_tag">Scan a tag</string>
     <string name="connect">Connect…</string>
     <string name="version">version</string>
