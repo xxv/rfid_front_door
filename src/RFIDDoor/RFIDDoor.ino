@@ -591,14 +591,9 @@ void setGrpCmd(char *args){
   uint8_t grp;
   if (strlen(args) > 0){
     sscanf(args, "%u", &grp);
-    if(setCurGroup(grp)){
-      Serial.println("Group set");
-    }else{
-      Serial.println("Error setting group");
-    }
-  }else{
-    Serial.println(getCurGroup());
+    setCurGroup(grp);
   }
+  Serial.println(getCurGroup());
 }
 
 /**
