@@ -36,14 +36,14 @@ public class ArduinoConnectService extends Service {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
-	private static final int STATE_READY = 0, STATE_WAITING_FOR_RESPONSE = 1,
-			STATE_READING_RESPONSE = 2;
-	private int mState = STATE_READY;
+	private static final int STATE_DISCONNECTED = 0, STATE_READY = 1,
+			STATE_WAITING_FOR_RESPONSE = 2, STATE_READING_RESPONSE = 3;
+	private int mState = STATE_DISCONNECTED;
 
 	private char mCmd = 0;
 
-	private static final char CMD_VER = 'v', CMD_LIST = 'l', CMD_SET_GROUP = 'a', CMD_DEL = 'd',
-			CMD_OPEN = 'r';
+	private static final char CMD_VER = 'v', CMD_LIST = 'l', CMD_ADD = 'a', CMD_DEL = 'd',
+			CMD_OPEN = 'r', CMD_CUR_GROUP = 'g';
 
 	private final Queue<String> mSendQueue = new ConcurrentLinkedQueue<String>();
 
@@ -88,6 +88,7 @@ public class ArduinoConnectService extends Service {
 	}
 
 	private final List<RfidRecord> mRfidRecords = new LinkedList<RfidRecord>();
+	private boolean mHasCopyOfList = false;
 
 	private static final Pattern REC_FORMAT = Pattern.compile("(\\d+)\t([A-Fa-f0-9:]+)");
 
@@ -121,10 +122,7 @@ public class ArduinoConnectService extends Service {
 			mState = STATE_READY;
 			mCmdResults.clear();
 
-			final String cmd = mSendQueue.poll();
-			if (cmd != null) {
-				sendCommand(cmd);
-			}
+			sendEnqueued();
 
 		} else {
 			mCmdResults.add(msg);
@@ -132,10 +130,17 @@ public class ArduinoConnectService extends Service {
 		}
 	}
 
+	private void sendEnqueued() {
+		final String cmd = mSendQueue.poll();
+		if (cmd != null) {
+			sendCommand(cmd);
+		}
+	}
+
 	private void onCommandFinished() {
 		switch (mCmd){
 			case CMD_VER:
-				mResultListener.onReceiveVersion(mCmdResults.get(0));
+				mResultListener.onVersionResult(mCmdResults.get(0));
 				break;
 
 			case CMD_LIST: {
@@ -146,15 +151,16 @@ public class ArduinoConnectService extends Service {
 
 						mRfidRecords.add(r);
 					} else {
-						mResultListener.onReceiveRecords(mRfidRecords);
+						mHasCopyOfList = true;
+						mResultListener.onListResult(mRfidRecords);
 						break;
 					}
 				}
 			}
 				break;
 
-			case CMD_SET_GROUP:
-				mResultListener.onSetGroupResult(true);
+			case CMD_ADD:
+				mResultListener.onAddResult(true);
 				break;
 
 			case CMD_DEL:
@@ -164,34 +170,65 @@ public class ArduinoConnectService extends Service {
 			case CMD_OPEN:
 				mResultListener.onOpenResult();
 				break;
+
+			case CMD_CUR_GROUP:
+				mResultListener.onCurGroupResult(Integer.valueOf(mCmdResults.get(0)));
+				break;
 		}
 	}
 
 	public void requestVersion() {
-		sendCommand("v");
+		sendCommand(CMD_VER);
 	}
 
+
 	public void requestOpen() {
-		sendCommand("r");
+		sendCommand(CMD_OPEN);
 	}
 
 	public void requestIdList() {
-		sendCommand("l");
+		sendCommand(CMD_LIST);
+	}
+
+	public void requestGetCurGroup() {
+		sendCommand(CMD_CUR_GROUP);
+	}
+
+	public void requestSetCurGroup(int group) {
+		sendCommand(CMD_CUR_GROUP + " " + group);
+	}
+
+	public boolean requestCachedList() {
+		if (mHasCopyOfList) {
+			mResultListener.onListResult(mRfidRecords);
+		}
+		return mHasCopyOfList;
 	}
 
 	public void requestDeleteId(RfidRecord record) {
-		sendCommand("d " + record.toIdString());
+		sendCommand(CMD_DEL + " " + record.toIdString());
 	}
 
-	public void requestSetGroup(RfidRecord r){
-		sendCommand("a" + r.toIdString());
+	public void requestAdd(RfidRecord r) {
+		sendCommand(CMD_ADD + r.toIdString());
 	}
 
 	private void onCmdSent(char cmdId) {
 		switch (cmdId) {
-			case CMD_SET_GROUP:
+			case CMD_ADD:
 
 				break;
+		}
+	}
+
+	private void sendCommand(char command) {
+		if (mState == STATE_READY) {
+			mCmd = command;
+			mBluetoothService.write((command + "\n").getBytes());
+			onCmdSent(command);
+			mState = STATE_WAITING_FOR_RESPONSE;
+		} else {
+			mSendQueue.add(Character.toString(command));
 		}
 	}
 
@@ -221,8 +258,10 @@ public class ArduinoConnectService extends Service {
 					mResultListener.onStateChange(msg.arg1);
 					switch (msg.arg1) {
 						case BluetoothService.STATE_CONNECTED:
+							mState = STATE_READY;
 							Toast.makeText(getApplicationContext(), "Connected", Toast.LENGTH_SHORT)
 									.show();
+							sendEnqueued();
 							break;
 
 						case BluetoothService.STATE_NONE:

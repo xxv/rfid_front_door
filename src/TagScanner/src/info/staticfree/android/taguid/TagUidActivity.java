@@ -20,15 +20,18 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +40,7 @@ import com.example.android.BluetoothChat.DeviceListActivity;
 import edu.mit.mobile.android.greenwheel.BluetoothService;
 
 public class TagUidActivity extends Activity implements OnClickListener, ServiceConnection {
+	private static final String TAG = TagUidActivity.class.getSimpleName();
 
 	PendingIntent pendingIntent;
 
@@ -62,6 +66,9 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 	private RfidRecord mRfidRecord;
 
+	private Spinner mGroupView;
+	private int mLastSelectedGroup;
+
 	private static final int REQUEST_PAIR = 100, REQUEST_BT_ENABLE = 101, REQUEST_BT_DEVICE = 102;
 
     @Override
@@ -75,6 +82,27 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		findViewById(R.id.connect).setOnClickListener(this);
 		findViewById(R.id.add).setOnClickListener(this);
 		findViewById(R.id.open).setOnClickListener(this);
+
+		mGroupView = (Spinner) findViewById(R.id.cur_group);
+
+		mGroupView.setOnItemSelectedListener(new OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> adapter, View v, int position, long id) {
+				if (mLastSelectedGroup != position) {
+					Log.d(TAG, "item clicked " + position);
+					if (mArduinoService != null) {
+						mArduinoService.requestSetCurGroup(position + 1);
+					}
+					mLastSelectedGroup = position;
+				}
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> adapter) {
+				// TODO Auto-generated method stub
+
+			}
+		});
 
 		mUidTextView.setOnClickListener(this);
 		mUidIntTextView.setOnClickListener(this);
@@ -153,7 +181,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 			case R.id.add:
 				if (mArduinoService != null) {
-					mArduinoService.requestSetGroup(mRfidRecord);
+					mArduinoService.requestAdd(mRfidRecord);
 				}
 				break;
 
@@ -330,13 +358,13 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	private final OnDoorResultListener mResultListener = new OnDoorResultListener() {
 
 		@Override
-		public void onReceiveVersion(String version) {
+		public void onVersionResult(String version) {
 			Toast.makeText(TagUidActivity.this, version, Toast.LENGTH_LONG).show();
 
 		}
 
 		@Override
-		public void onReceiveRecords(List<RfidRecord> rfidRecords) {
+		public void onListResult(List<RfidRecord> rfidRecords) {
 
 			mArrayAdapter = new ArrayAdapter<RfidRecord>(TagUidActivity.this,
 					android.R.layout.simple_list_item_1, rfidRecords);
@@ -351,6 +379,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 					mLoadingView.setVisibility(View.GONE);
 					findViewById(R.id.connect).setVisibility(View.GONE);
 					mArduinoService.requestIdList();
+					mArduinoService.requestGetCurGroup();
 
 					break;
 
@@ -365,7 +394,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		}
 
 		@Override
-		public void onSetGroupResult(boolean result) {
+		public void onAddResult(boolean result) {
 			mArduinoService.requestIdList();
 
 		}
@@ -380,6 +409,13 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		public void onOpenResult() {
 			Toast.makeText(TagUidActivity.this, R.string.door_open_result, Toast.LENGTH_SHORT)
 					.show();
+		}
+
+		@Override
+		public void onCurGroupResult(int group) {
+			mLastSelectedGroup = group - 1;
+			mGroupView.setSelection(group - 1);
+
 		}
 	};
 

@@ -46,6 +46,20 @@
             android:layout_alignTop="@+id/uid"
             android:text="@string/open" />
 
+        <Spinner
+            android:id="@+id/cur_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/open"
+            android:layout_alignTop="@+id/add"
+            android:layout_toRightOf="@+id/open"
+            android:background="@android:drawable/btn_default"
+            android:entries="@array/groups"
+            android:prompt="@string/group_prompt" >
+
+            <!-- Preview: listitem=@android:layout/simple_spinner_item -->
+        </Spinner>
+
     </RelativeLayout>
 
     <Button

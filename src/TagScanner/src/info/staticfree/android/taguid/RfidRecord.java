@@ -6,8 +6,9 @@ public class RfidRecord {
 
 	}
 
-	public RfidRecord(int group, byte[] id) {
+	public RfidRecord(int groups, byte[] id) {
 		this.id = id;
+		this.groups = groups;
 	}
 
 	int groups;
@@ -31,6 +32,6 @@ public class RfidRecord {
 
 	@Override
 	public String toString() {
-		return toIdString();
+		return groups + " " + toIdString();
 	}
 }

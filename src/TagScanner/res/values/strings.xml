@@ -9,5 +9,16 @@
     <string name="open">Open</string>
     <string name="delete">Delete</string>
     <string name="door_open_result">Door opened</string>
+    
+    <string name="group_prompt">Set Current Group</string>
 
+    <string-array name="groups">
+        <item >1</item>
+        <item >2</item>
+        <item >3</item>
+        <item >4</item>
+        <item >5</item>
+        <item >6</item>
+        <item >7</item>
+    </string-array>
 </resources>
