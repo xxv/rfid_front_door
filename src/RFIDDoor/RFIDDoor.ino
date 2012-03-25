@@ -1,5 +1,6 @@
 #include <EEPROM.h>
 #include <AltSoftSerial.h> 
+#include <ShiftSevenSeg.h>
 
 // each ID is truncated to exactly ID_SIZE bytes.
 #define ID_SIZE 8
@@ -43,6 +44,11 @@
 
 #define PIN_STATUS_LED 13
 
+#define PIN_SEG_STROBE 2
+#define PIN_SEG_DATA 3
+#define PIN_SEG_CLOCK 5
+#define PIN_SEG_OUTPUT_ENABLE 6
+
 char* VERSION = "0.2";
 
 uint8_t curGroup = DEFAULT_GRP;
@@ -69,6 +75,8 @@ byte sendData[ID_SIZE];
 uint8_t newId = 0;
 
 AltSoftSerial rfidReader; // 9,8
+
+ShiftSevenSeg seg = ShiftSevenSeg(PIN_SEG_STROBE, PIN_SEG_DATA, PIN_SEG_CLOCK, 0, 3, 7, 5, 4, 1, 2, 6);
 
 /**
  * searches all the records for the given
@@ -346,6 +354,7 @@ boolean readId(char * idStr, byte * id){
 boolean setCurGroup(uint8_t group){
   if (group <= GRP_MAX){
     curGroup = group;
+    showCurGroup();
     return true;
   }
   return false;
@@ -359,6 +368,10 @@ uint8_t getCurGroup(){
     return 0;
   }
   return curGroup;
+}
+
+void showCurGroup(){
+  seg.showHexDigit(curGroup);
 }
 
 /**
@@ -677,6 +690,9 @@ void setup(){
   rfidReader.begin(9600);
   pinMode(PIN_RELAY, OUTPUT);
   pinMode(PIN_STATUS_LED, OUTPUT);
+  pinMode(PIN_SEG_OUTPUT_ENABLE, OUTPUT);
+  digitalWrite(PIN_SEG_OUTPUT_ENABLE, HIGH);
+  showCurGroup();
 }
 
 int sendDelay = 0;
