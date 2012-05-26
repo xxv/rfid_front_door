@@ -44,10 +44,10 @@
 
 #define PIN_STATUS_LED 13
 
-#define PIN_SEG_STROBE 2
-#define PIN_SEG_DATA 3
-#define PIN_SEG_CLOCK 5
-#define PIN_SEG_OUTPUT_ENABLE 6
+#define PIN_SEG_STROBE 13
+#define PIN_SEG_DATA 12
+#define PIN_SEG_CLOCK 11
+#define PIN_SEG_OUTPUT_ENABLE 10
 
 char* VERSION = "0.2";
 
@@ -76,7 +76,7 @@ uint8_t newId = 0;
 
 AltSoftSerial rfidReader; // 9,8
 
-ShiftSevenSeg seg = ShiftSevenSeg(PIN_SEG_STROBE, PIN_SEG_DATA, PIN_SEG_CLOCK, 0, 3, 7, 5, 4, 1, 2, 6);
+ShiftSevenSeg seg = ShiftSevenSeg(PIN_SEG_STROBE, PIN_SEG_DATA, PIN_SEG_CLOCK, 1 /*A*/, 0 /*B*/, 2/*C*/, 7/*D*/, 6/*E*/, 5/*F*/, 4/*G*/, 3/*DP*/);
 
 /**
  * searches all the records for the given
