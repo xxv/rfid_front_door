@@ -42,8 +42,13 @@
 // the Arduino pin with the relay
 #define PIN_RELAY 7
 
+// the Arduino pin connected to the button
+#define PIN_BUTTON 8
+#define DEBOUNCE_THRESHOLD 30
+
 #define PIN_STATUS_LED 13
 
+// PINs for communicating with the shift register
 #define PIN_SEG_STROBE 13
 #define PIN_SEG_DATA 12
 #define PIN_SEG_CLOCK 11
@@ -525,6 +530,12 @@ void activateRelay(){
   digitalWrite(PIN_STATUS_LED, LOW);
 }
 
+void buttonPress(){
+  // done in an unusual way, as the groups are stored 1-7 and mod will get us 0-6
+  setCurGroup(getCurGroup() % 7 + 1);
+  
+}
+
 boolean addIdToCurrentGroup(byte * id){
   uint8_t groups = getGroups(id);
   return setGroups(id, groups | (1 << (getCurGroup() - 1)));
@@ -692,6 +703,8 @@ void setup(){
 
 int sendDelay = 0;
 
+uint8_t button_press = 0;
+
 void loop(){
   if (Serial.available()){
     cmdRead(Serial.read());
@@ -702,5 +715,17 @@ void loop(){
   sendDelay = (sendDelay + 1) % RFID_READ_FREQUENCY;
   if (rfidReader.available()){
     rfidRead(rfidReader.read());
+  }
+
+  if (digitalRead(PIN_BUTTON) == HIGH){
+    if (button_press != 255){
+      button_press = (button_press + 1) % 254;
+      if (button_press == DEBOUNCE_THRESHOLD){
+        buttonPress();
+        button_press = 255;
+      }
+    }
+  }else{
+    button_press = 0;
   }
 }
