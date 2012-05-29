@@ -23,9 +23,9 @@ details here that can be omitted if desired.
 RFIDs
 -----
 
-The system was designed to work with Mifare Classic and other similar RFID
-tags. The reader knows how to talk to 13.56MHz IEC 14443 tags, but one could
-use another reader or tag type if desired.
+The system was designed to work with 13.56MHz IEC 14443 Mifare Classic and
+other similar RFID tags, but one could use another reader or tag type if
+desired.
 
 Up to 50 tags can be stored on an atmega168 chip or 100 for a mega328 (check
 the printing on the main chip on your Arduino board).
