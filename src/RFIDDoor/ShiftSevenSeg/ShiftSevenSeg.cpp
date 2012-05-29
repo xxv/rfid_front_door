@@ -38,7 +38,8 @@ static const uint8_t
     S_A | S_D | S_E | S_F,                // C
     S_B | S_C | S_D | S_E | S_G,          // D
     S_A | S_D | S_E | S_F | S_G,          // E
-    S_A | S_E | S_F | S_G                 // F
+    S_A | S_E | S_F | S_G,                // F
+    S_DP                                  // .
   };
   this->strobe = strobe;
   this->data = data;
@@ -49,13 +50,31 @@ static const uint8_t
   shiftOut(this->data, this->clock, MSBFIRST, 0);
 }
 
+void ShiftSevenSeg::shiftBits(uint8_t bits){
+  shiftOut(this->data, this->clock, MSBFIRST, bits);
+  digitalWrite(this->strobe, HIGH);
+  // need to delay 200ns here
+  delayMicroseconds(1);
+  digitalWrite(this->strobe, LOW);
+  cur = bits;
+}
+
 void ShiftSevenSeg::showHexDigit(uint8_t digit){
   if (digit >= 16){
     return;
   }
-  shiftOut(this->data, this->clock, MSBFIRST, segments[digit]);
-  digitalWrite(this->strobe, HIGH);
-  // need to delay 200ns here
-delayMicroseconds(1);
-  digitalWrite(this->strobe, LOW);
+  shiftBits(segments[digit]);
+}
+
+void ShiftSevenSeg::allOn(){
+    shiftBits(255);
+}
+
+void ShiftSevenSeg::setDecimalPoint(bool on){
+    if (on){
+        cur |= this->segments[16];
+    }else{
+        cur &= ~(this->segments[16]);
+    }
+    shiftBits(cur);
 }
