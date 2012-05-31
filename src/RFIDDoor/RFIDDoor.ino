@@ -17,8 +17,14 @@
 
 // max number of records
 // 50 for mega168, 100 for mega328
-#define REC_MAX 100
+#ifdef __AVR_ATmega168__
+#define REC_MAX 50
+#endif
 
+#ifdef __AVR_ATmega328P__
+#define REC_MAX 100
+#endif
+#
 // offset for storing non-record data
 #define REC_OFFSET 32
 
