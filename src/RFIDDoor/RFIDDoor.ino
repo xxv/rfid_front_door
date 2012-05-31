@@ -58,7 +58,7 @@
 #define PIN_SEG_STROBE 13
 #define PIN_SEG_DATA 12
 #define PIN_SEG_CLOCK 11
-#define PIN_SEG_OUTPUT_ENABLE 10
+#define PIN_SEG_OUTPUT_ENABLE 6
 
 char* VERSION = "0.2";
 
