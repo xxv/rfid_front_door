@@ -1,6 +1,8 @@
 #include "Arduino.h"
 #include "ShiftSevenSeg.h"
 
+#define SEG_DP 36
+
 ShiftSevenSeg::ShiftSevenSeg(uint8_t strobe, uint8_t data, uint8_t clock, uint8_t sa, uint8_t sb, uint8_t sc, uint8_t sd, uint8_t se, uint8_t sf, uint8_t sg, uint8_t sdp){
 /*     
  *   __A__
@@ -33,13 +35,33 @@ static const uint8_t
     S_A | S_B | S_C,                     // 7
     S_A | S_B | S_C | S_D | S_E | S_F | S_G, // 8
     S_A | S_B | S_C | S_F | S_G,          // 9
-    S_A | S_B | S_C | S_E | S_F | S_G,    // A
+    S_A | S_B | S_C | S_E | S_F | S_G,    // A  10
     S_C | S_D | S_E | S_F | S_G,          // B
     S_A | S_D | S_E | S_F,                // C
     S_B | S_C | S_D | S_E | S_G,          // D
     S_A | S_D | S_E | S_F | S_G,          // E
     S_A | S_E | S_F | S_G,                // F
-    S_DP                                  // .
+    S_A | S_C | S_D | S_E | S_F | S_G,    // G
+    S_B | S_C | S_E | S_F | S_G,          // H
+    S_E | S_F,                            // I
+    S_B | S_C | S_D | S_E,                // J
+    0,                                    // no K
+    S_D | S_E | S_F,                      // L
+    0,                                    // no M
+    S_C | S_E | S_G,                      // n
+    S_A | S_B | S_C | S_D | S_E | S_F,    // O
+    S_A | S_B | S_E | S_F | S_G,          // P
+    S_A | S_B | S_C | S_F | S_G,          // q
+    S_E | S_G,                            // r
+    S_A | S_C | S_D | S_F | S_G,          // S
+    S_A | S_B | S_C,                      // T
+    S_B | S_C | S_D | S_E | S_F,          // U
+    0,                                    // no V
+    0,                                    // no W
+    0,                                    // no X
+    S_B | S_C | S_F | S_G,                // y
+    S_A | S_B | S_G | S_E | S_D,          // Z
+    S_DP                                  // . 36
   };
   this->strobe = strobe;
   this->data = data;
@@ -66,15 +88,44 @@ void ShiftSevenSeg::showHexDigit(uint8_t digit){
   shiftBits(segments[digit]);
 }
 
+void ShiftSevenSeg::showAscii(char c){
+    // numbers
+    if (c >= 0x30 && c <= 0x39){
+        shiftBits(segments[c - 0x30]);
+
+    // uppercase letters
+    }else if (c >= 'A' && c <= 'Z'){
+        shiftBits(segments[c - 0x41 + 10]);
+
+    // lowercase letters
+    }else if (c >= 'a' && c <= 'z'){
+        shiftBits(segments[c - 'a' + 10]);
+    }else {
+        shiftBits(0);
+    }
+}
+
+void ShiftSevenSeg::showString(char* c){
+    showString(c, 300);
+}
+
+void ShiftSevenSeg::showString(char* c, int delay_ms){
+    uint8_t len = strlen(c);
+    for (uint8_t i = 0; i < len; i++){
+        showAscii(c[i]);
+        delay(delay_ms);
+    }
+}
+
 void ShiftSevenSeg::allOn(){
     shiftBits(255);
 }
 
 void ShiftSevenSeg::setDecimalPoint(bool on){
     if (on){
-        cur |= this->segments[16];
+        cur |= this->segments[SEG_DP];
     }else{
-        cur &= ~(this->segments[16]);
+        cur &= ~(this->segments[SEG_DP]);
     }
     shiftBits(cur);
 }
