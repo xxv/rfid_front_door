@@ -727,11 +727,13 @@ void loop(){
     if (button_press != 255){
       button_press = (button_press + 1) % 254;
       if (button_press == DEBOUNCE_THRESHOLD){
-        buttonPress();
         button_press = 255;
       }
     }
   }else{
+    if (button_press == 255){
+        buttonPress();
+    }
     button_press = 0;
   }
 }
