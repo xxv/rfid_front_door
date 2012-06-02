@@ -48,9 +48,16 @@
 // the Arduino pin with the relay
 #define PIN_RELAY 7
 
+// after this many ms, add next quits
+#define ADD_NEXT_TIMEOUT 10000
+
 // the Arduino pin connected to the button
 #define PIN_BUTTON 8
 #define DEBOUNCE_THRESHOLD 30
+#define LONGPRESS_TIMEOUT 1500
+#define BTN_STATE_DOWN 255
+#define BTN_STATE_LONGPRESS 254
+#define BTN_STATE_UP 0
 
 #define PIN_STATUS_LED 13
 
@@ -64,7 +71,8 @@ char* VERSION = "0.2";
 
 uint8_t curGroup = DEFAULT_GRP;
 
-boolean addNext = false;
+boolean addNextFlag = false;
+unsigned long addNextTimeout = 0;
 
 // RFID reader interface
 uint8_t STATION_ID = 0x0;
@@ -382,6 +390,7 @@ uint8_t getCurGroup(){
 }
 
 void showCurGroup(){
+  digitalWrite(PIN_SEG_OUTPUT_ENABLE, HIGH);
   seg.showHexDigit(curGroup);
 }
 
@@ -392,13 +401,13 @@ void idScanned(uint8_t status, byte* id){
   if (status != 0){
     return;
   }
-  if (addNext){
+  if (addNextFlag){
     if (addIdToCurrentGroup(id)){
       indicateSuccess();
     }else{
       indicateProblem();
     }
-    addNext = false;
+    addNextFlag = false;
   }else{
     if (checkGroup(id, getCurGroup())){
       activateRelay();
@@ -406,6 +415,14 @@ void idScanned(uint8_t status, byte* id){
       indicateProblem();
     }
   }
+}
+
+/**
+ * add the next card to the current group
+ */
+void addNext(){
+  addNextFlag = true;
+  addNextTimeout = millis();
 }
 
 /**
@@ -522,6 +539,13 @@ void indicateProblem(){
   delay(100);
 }
 
+void fadeDisplay(){
+  for (uint8_t i = 0; i < 255; i ++){
+    analogWrite(PIN_SEG_OUTPUT_ENABLE, i);
+    delay(20);
+  }
+}
+
 /**
  * activates the relay to open the door
  */
@@ -536,11 +560,44 @@ void activateRelay(){
   digitalWrite(PIN_STATUS_LED, LOW);
 }
 
+uint8_t button_press = BTN_STATE_UP;
+unsigned long longTimer = 0;
+
+void handleButton(){
+  if (digitalRead(PIN_BUTTON) == LOW){
+    if (button_press != BTN_STATE_DOWN && button_press != BTN_STATE_LONGPRESS){
+      button_press = (button_press + 1) % 253;
+      if (button_press == DEBOUNCE_THRESHOLD){
+        button_press = BTN_STATE_DOWN;
+        longTimer = millis();
+      }
+    }else{
+      // down state detected, and still being held
+      if (millis() - longTimer > LONGPRESS_TIMEOUT){
+        buttonLongPress();
+        button_press = BTN_STATE_LONGPRESS;
+      }
+    }
+  // up 
+  }else{
+    // previous state was down
+    if (button_press == BTN_STATE_DOWN){
+        buttonPress();
+    }
+    button_press = BTN_STATE_UP;
+  }
+}
+
 void buttonPress(){
   // done in an unusual way, as the groups are stored 1-7 and mod will get us 0-6
   setCurGroup(getCurGroup() % 7 + 1);
-  
 }
+
+void buttonLongPress(){
+  addNext();
+  seg.showString(" scan card ", 500);
+}
+  
 
 boolean addIdToCurrentGroup(byte * id){
   uint8_t groups = getGroups(id);
@@ -662,7 +719,7 @@ void runCmd(char * cmd){
     break;
 
     case 'A':
-    addNext = true;
+    addNext();
     Serial.println("The next card scanned will be added to the current group");
     break;
     
@@ -687,6 +744,10 @@ void runCmd(char * cmd){
       setGrpCmd(cmd + 1);
       break;
 
+    case 'f':
+      fadeDisplay();
+      break;
+
     case 0:
     // don't need to do anything
     break;
@@ -698,18 +759,20 @@ void runCmd(char * cmd){
 }
 
 void setup(){
-  Serial.begin(115200);
-  rfidReader.begin(9600);
   pinMode(PIN_RELAY, OUTPUT);
   pinMode(PIN_STATUS_LED, OUTPUT);
   pinMode(PIN_SEG_OUTPUT_ENABLE, OUTPUT);
   digitalWrite(PIN_SEG_OUTPUT_ENABLE, HIGH);
+  Serial.begin(115200);
+  rfidReader.begin(9600);
+  seg.allOn();
+  delay(500);
+//  fadeDisplay();
   showCurGroup();
 }
 
 int sendDelay = 0;
 
-uint8_t button_press = 0;
 
 void loop(){
   if (Serial.available()){
@@ -723,17 +786,11 @@ void loop(){
     rfidRead(rfidReader.read());
   }
 
-  if (digitalRead(PIN_BUTTON) == LOW){
-    if (button_press != 255){
-      button_press = (button_press + 1) % 254;
-      if (button_press == DEBOUNCE_THRESHOLD){
-        button_press = 255;
-      }
-    }
-  }else{
-    if (button_press == 255){
-        buttonPress();
-    }
-    button_press = 0;
+  handleButton();
+
+  if (addNextFlag && (millis() - addNextTimeout > ADD_NEXT_TIMEOUT)){
+    addNextFlag = false;
+    indicateProblem();
+    showCurGroup();
   }
 }
