@@ -24,7 +24,7 @@
 #ifdef __AVR_ATmega328P__
 #define REC_MAX 100
 #endif
-#
+
 // offset for storing non-record data
 #define REC_OFFSET 32
 
@@ -49,7 +49,10 @@
 #define PIN_RELAY 7
 
 // after this many ms, add next quits
-#define ADD_NEXT_TIMEOUT 10000
+#define ADD_NEXT_TIMEOUT 20000
+
+// after this long, the screen dims
+#define SCREEN_DIM_TIMEOUT 10000
 
 // the Arduino pin connected to the button
 #define PIN_BUTTON 8
@@ -57,6 +60,7 @@
 #define LONGPRESS_TIMEOUT 1500
 #define BTN_STATE_DOWN 255
 #define BTN_STATE_LONGPRESS 254
+#define BTN_STATE_CONSUME 243
 #define BTN_STATE_UP 0
 
 #define PIN_STATUS_LED 13
@@ -73,6 +77,9 @@ uint8_t curGroup = DEFAULT_GRP;
 
 boolean addNextFlag = false;
 unsigned long addNextTimeout = 0;
+
+boolean screenDimmed = false;
+unsigned long screenDimTimeout = 0;
 
 // RFID reader interface
 uint8_t STATION_ID = 0x0;
@@ -540,7 +547,7 @@ void indicateProblem(){
 }
 
 void fadeDisplay(){
-  for (uint8_t i = 0; i < 255; i ++){
+  for (uint8_t i = 255; i >= 20; i --){
     analogWrite(PIN_SEG_OUTPUT_ENABLE, i);
     delay(20);
   }
@@ -565,15 +572,26 @@ unsigned long longTimer = 0;
 
 void handleButton(){
   if (digitalRead(PIN_BUTTON) == LOW){
-    if (button_press != BTN_STATE_DOWN && button_press != BTN_STATE_LONGPRESS){
-      button_press = (button_press + 1) % 253;
+    if (button_press != BTN_STATE_DOWN && button_press != BTN_STATE_LONGPRESS && button_press != BTN_STATE_CONSUME){
+      if (button_press < 240){
+        button_press++;
+      }
       if (button_press == DEBOUNCE_THRESHOLD){
+        if (screenDimmed){
+          screenDimmed = false;
+          screenDimTimeout = millis();
+          showCurGroup();
+          button_press = BTN_STATE_CONSUME;
+          return;
+        }
         button_press = BTN_STATE_DOWN;
+        screenDimTimeout = millis();
         longTimer = millis();
       }
     }else{
       // down state detected, and still being held
-      if (millis() - longTimer > LONGPRESS_TIMEOUT){
+      if (button_press == BTN_STATE_DOWN && (millis() - longTimer > LONGPRESS_TIMEOUT)){
+        screenDimTimeout = millis();
         buttonLongPress();
         button_press = BTN_STATE_LONGPRESS;
       }
@@ -581,10 +599,17 @@ void handleButton(){
   // up 
   }else{
     // previous state was down
-    if (button_press == BTN_STATE_DOWN){
+    switch(button_press){
+      case BTN_STATE_DOWN:
         buttonPress();
+        // no break
+
+      case BTN_STATE_LONGPRESS:
+      case BTN_STATE_CONSUME:
+        screenDimTimeout = millis();
+        button_press = BTN_STATE_UP;
+        break;
     }
-    button_press = BTN_STATE_UP;
   }
 }
 
@@ -792,5 +817,13 @@ void loop(){
     addNextFlag = false;
     indicateProblem();
     showCurGroup();
+    // reset screen dimmer
+    screenDimmed = false;
+    screenDimTimeout = millis();
+  }
+
+  if (!screenDimmed && (millis() - screenDimTimeout > SCREEN_DIM_TIMEOUT)){
+    fadeDisplay();
+    screenDimmed = true;
   }
 }
