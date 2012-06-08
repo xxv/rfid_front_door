@@ -102,7 +102,7 @@ uint8_t newId = 0;
 
 AltSoftSerial rfidReader; // 9,8
 
-ShiftSevenSeg seg = ShiftSevenSeg(PIN_SEG_STROBE, PIN_SEG_DATA, PIN_SEG_CLOCK, 1 /*A*/, 0 /*B*/, 2/*C*/, 7/*D*/, 6/*E*/, 5/*F*/, 4/*G*/, 3/*DP*/);
+ShiftSevenSeg seg = ShiftSevenSeg(PIN_SEG_STROBE, PIN_SEG_DATA, PIN_SEG_CLOCK, PIN_SEG_OUTPUT_ENABLE);
 
 /**
  * searches all the records for the given
