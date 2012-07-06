@@ -711,9 +711,11 @@ void cmdRead(char c){
   switch (c){
     case '\n':
     case '\r':
-    // make sure the command is null-terminated
-    cmd[cmdIdx] = 0;
-    runCmd(cmd);
+    if (cmdIdx > 0){
+      // make sure the command is null-terminated
+      cmd[cmdIdx] = 0;
+      runCmd(cmd);
+    }
     cmdIdx = 0;
     break;
     default:
