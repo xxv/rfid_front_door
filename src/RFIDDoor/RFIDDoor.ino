@@ -55,7 +55,7 @@
 #define SCREEN_DIM_TIMEOUT 10000
 
 // the Arduino pin connected to the button
-#define PIN_BUTTON 8
+#define PIN_BUTTON 5
 #define DEBOUNCE_THRESHOLD 30
 #define LONGPRESS_TIMEOUT 1500
 #define BTN_STATE_DOWN 255
