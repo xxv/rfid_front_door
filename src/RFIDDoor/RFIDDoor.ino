@@ -25,7 +25,7 @@
 #define REC_MAX 100
 #endif
 
-// offset for storing non-record data
+// offset at beginning of EEPROM for storing non-record data
 #define REC_OFFSET 32
 
 // this group will be set if the power's cycled
@@ -48,11 +48,17 @@
 // the Arduino pin with the relay
 #define PIN_RELAY A1
 
-// after this many ms, add next quits
+// how long to keep the relay on (ms)
+#define RELAY_ON_TIME 150
+
+// after this many ms, 'add next' quits
 #define ADD_NEXT_TIMEOUT 20000
 
 // after this long, the screen dims
 #define SCREEN_DIM_TIMEOUT 10000
+
+// the brightness of the screen, when dimmed (0-255); 0 is off
+#define SCREEN_DIM_LEVEL 20
 
 // the Arduino pin connected to the button
 #define PIN_BUTTON 5
@@ -527,7 +533,7 @@ void indicateProblem(){
 }
 
 void fadeDisplay(){
-  for (uint8_t i = 255; i >= 20; i --){
+  for (uint8_t i = 255; i >= SCREEN_DIM_LEVEL; i --){
     analogWrite(PIN_SEG_OUTPUT_ENABLE, i);
     delay(20);
   }
@@ -540,8 +546,7 @@ void activateRelay(){
   seg.setDecimalPoint(true);
   digitalWrite(PIN_RELAY, HIGH);
 
-  // turn the relay on for 1s
-  delay(150);
+  delay(RELAY_ON_TIME);
 
   digitalWrite(PIN_RELAY, LOW);
   seg.setDecimalPoint(false);
@@ -773,7 +778,6 @@ void setup(){
   rfidReader.begin(9600);
   seg.allOn();
   delay(500);
-//  fadeDisplay();
   showCurGroup();
 }
 
