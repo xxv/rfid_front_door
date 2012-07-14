@@ -390,16 +390,6 @@ boolean setCurGroup(uint8_t group){
   return false;
 }
 
-/**
- * gets the currently active group
- */
-uint8_t getCurGroup(){
-  if (curGroup > GRP_MAX){
-    return 0;
-  }
-  return curGroup;
-}
-
 void showCurGroup(){
   digitalWrite(PIN_SEG_OUTPUT_ENABLE, HIGH);
   seg.showHexDigit(curGroup);
@@ -412,18 +402,28 @@ void idScanned(uint8_t status, byte* id){
   if (status != 0){
     return;
   }
+
   if (addNextFlag){
-    if (addIdToCurrentGroup(id)){
-      indicateSuccess();
-    }else{
-      indicateProblem();
+    if (checkGroup(id, curGroup)){
+      // already in the group. Remove.
+      if (removeIdFromCurrentGroup(id)){
+        seg.showString(" removed ", 500);
+      }else{
+        indicateError();
+      }
+    }else{ // not in the group, add.
+      if (addIdToCurrentGroup(id)){
+        seg.showString(" added ", 500);
+      }else{
+        indicateError();
+      }
     }
     addNextFlag = false;
   }else{
-    if (checkGroup(id, getCurGroup())){
+    if (checkGroup(id, curGroup)){
       activateRelay();
     }else{
-      indicateProblem();
+        seg.showString(" added ", 500);
     }
   }
 }
@@ -527,10 +527,19 @@ void indicateSuccess(){
   seg.showString(" good ", 500);
 }
 
-void indicateProblem(){
-  seg.showString(" err ", 500);
-
+void indicateFailure(){
+  for (uint8_t i = 0; i < 5; i++){
+    seg.setDecimalPoint(true);
+    delay(100);
+    seg.setDecimalPoint(false);
+    delay(100);
+  }
 }
+
+void indicateError(){
+  seg.showString(" err ", 500);
+}
+
 
 void fadeDisplay(){
   for (uint8_t i = 255; i >= SCREEN_DIM_LEVEL; i --){
@@ -600,7 +609,7 @@ void handleButton(){
 
 void buttonPress(){
   // done in an unusual way, as the groups are stored 1-7 and mod will get us 0-6
-  setCurGroup(getCurGroup() % 7 + 1);
+  setCurGroup(curGroup % 7 + 1);
 }
 
 void buttonLongPress(){
@@ -611,7 +620,7 @@ void buttonLongPress(){
 
 boolean addIdToCurrentGroup(byte * id){
   uint8_t groups = getGroups(id);
-  return setGroups(id, groups | (1 << (getCurGroup() - 1)));
+  return setGroups(id, groups | (1 << (curGroup - 1)));
 }
 
 /**
@@ -634,7 +643,7 @@ void addCmd(char * args){
 
 boolean removeIdFromCurrentGroup(byte * id){
   uint8_t groups = getGroups(id);
-  return setGroups(id, groups & ~(1 << (getCurGroup() - 1)));
+  return setGroups(id, groups & ~(1 << (curGroup - 1)));
 }
 
 /**
@@ -677,7 +686,7 @@ void setGrpCmd(char *args){
     sscanf(args, "%u", &grp);
     setCurGroup(grp);
   }
-  Serial.println(getCurGroup());
+  Serial.println(curGroup);
 }
 
 /**
@@ -800,7 +809,7 @@ void loop(){
 
   if (addNextFlag && (millis() - addNextTimeout > ADD_NEXT_TIMEOUT)){
     addNextFlag = false;
-    indicateProblem();
+    indicateFailure();
     showCurGroup();
     // reset screen dimmer
     screenDimmed = false;
@@ -812,3 +821,4 @@ void loop(){
     screenDimmed = true;
   }
 }
+
