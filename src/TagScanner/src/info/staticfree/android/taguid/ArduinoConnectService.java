@@ -46,7 +46,7 @@ public class ArduinoConnectService extends Service {
 	private char mCmd = 0;
 
 	private static final char CMD_VER = 'v', CMD_LIST = 'l', CMD_ADD = 'a', CMD_DEL = 'd',
-			CMD_OPEN = 'r', CMD_CUR_GROUP = 'g';
+			CMD_OPEN = 'o', CMD_CUR_GROUP = 'g';
 
 
 	private final Queue<String> mSendQueue = new ConcurrentLinkedQueue<String>();
