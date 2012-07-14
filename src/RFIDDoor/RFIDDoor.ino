@@ -46,7 +46,7 @@
 #define CMD_BUFF_SIZE 64
 
 // the Arduino pin with the relay
-#define PIN_RELAY 7
+#define PIN_RELAY A1
 
 // after this many ms, add next quits
 #define ADD_NEXT_TIMEOUT 20000
