@@ -46,6 +46,16 @@ The currently active group, however, is *not* stored in EEPROM, so it will
 revert to group 1 if the power is cycled. You should ensure that group 1 is a
 safe group to be active in this case.
 
+Physical Interface
+------------------
+
+The setup has a 7-segment display and a single button. The 7-segment display
+shows the active group number and the button advances through the groups.
+
+To add a card to a group, long-press the button until it says, "scan card".
+Once you tap the card on the reader, it'll be either added or removed (if it's
+already in the group).
+
 Serial Control Interface
 ------------------------
 
@@ -195,8 +205,8 @@ itself. Both are intended to be lasercut.
 The colors in the housing SVG files represent the following:
 
 * Red: cut
-* Blue: medium raster etch
-* Light Brown: deep raster etch (to fit the antenna)
+* Green: medium raster etch
+* Blue: deep raster etch (to fit the antenna)
 * other colors: informational; don't cut
 
 The main box was made with [BoxMaker][], which is an excellent tool for making

@@ -523,10 +523,17 @@ void requestId(){
   sendRFIDCmd(0x25, 2, sendData);
 }
 
+/**
+ * The user's action succeeded.
+ */
 void indicateSuccess(){
   seg.showString(" good ", 500);
 }
 
+/**
+ * Indicates that something didn't succeed.
+ * Similar to an HTTP 400-series error.
+ */
 void indicateFailure(){
   for (uint8_t i = 0; i < 5; i++){
     seg.setDecimalPoint(true);
@@ -536,6 +543,10 @@ void indicateFailure(){
   }
 }
 
+/**
+ * Indicates that something went wrong.
+ * Similar to an HTTP 500 error.
+ */
 void indicateError(){
   seg.showString(" err ", 500);
 }
