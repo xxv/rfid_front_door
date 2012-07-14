@@ -63,8 +63,6 @@
 #define BTN_STATE_CONSUME 243
 #define BTN_STATE_UP 0
 
-#define PIN_STATUS_LED 13
-
 // PINs for communicating with the shift register
 #define PIN_SEG_STROBE 13
 #define PIN_SEG_DATA 12
@@ -520,30 +518,12 @@ void requestId(){
 }
 
 void indicateSuccess(){
-
-  digitalWrite(PIN_STATUS_LED, HIGH);
-  delay(500);
-  digitalWrite(PIN_STATUS_LED, LOW);
-  delay(100);
-  digitalWrite(PIN_STATUS_LED, HIGH);
-  delay(500);
-  digitalWrite(PIN_STATUS_LED, LOW);
-  delay(100);
+  seg.showString(" good ", 500);
 }
 
 void indicateProblem(){
-  digitalWrite(PIN_STATUS_LED, HIGH);
-  delay(100);
-  digitalWrite(PIN_STATUS_LED, LOW);
-  delay(100);
-  digitalWrite(PIN_STATUS_LED, HIGH);
-  delay(100);
-  digitalWrite(PIN_STATUS_LED, LOW);
-  delay(100);
-  digitalWrite(PIN_STATUS_LED, HIGH);
-  delay(100);
-  digitalWrite(PIN_STATUS_LED, LOW);
-  delay(100);
+  seg.showString(" err ", 500);
+
 }
 
 void fadeDisplay(){
@@ -557,14 +537,14 @@ void fadeDisplay(){
  * activates the relay to open the door
  */
 void activateRelay(){
+  seg.setDecimalPoint(true);
   digitalWrite(PIN_RELAY, HIGH);
-  digitalWrite(PIN_STATUS_LED, HIGH);
 
   // turn the relay on for 1s
-  delay(1000);
+  delay(150);
 
   digitalWrite(PIN_RELAY, LOW);
-  digitalWrite(PIN_STATUS_LED, LOW);
+  seg.setDecimalPoint(false);
 }
 
 uint8_t button_press = BTN_STATE_UP;
@@ -787,7 +767,6 @@ void runCmd(char * cmd){
 
 void setup(){
   pinMode(PIN_RELAY, OUTPUT);
-  pinMode(PIN_STATUS_LED, OUTPUT);
   pinMode(PIN_SEG_OUTPUT_ENABLE, OUTPUT);
   digitalWrite(PIN_SEG_OUTPUT_ENABLE, HIGH);
   Serial.begin(115200);
