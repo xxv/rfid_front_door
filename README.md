@@ -104,6 +104,7 @@ Syntax:
 Add the given ID to the currently active group.
 
 Syntax:
+
     a <id> <newline>
 
 Adds an ID. &lt;id> should be conveyed in hex, much like the output of l
@@ -133,6 +134,7 @@ Syntax:
 Remove the ID from the current group.
 
 Syntax:
+
     r <id> <newline>
 
 #### 'g' command
@@ -140,6 +142,7 @@ Syntax:
 Sets the currently active group.
 
 Syntax:
+
     g <group> <newline>
 
 &lt;group> is "1"-"7" and can be omitted to just retrieve the current group.
