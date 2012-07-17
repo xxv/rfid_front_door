@@ -3,6 +3,15 @@ RFID Front Door Lock
 
 [![RFID reader][photo-overview-thumb]][photo-overview-flickr]
 
+This is a classy RFID reader to unlock our home's front door. It supports
+groups and has an optional Android app.
+
+I live near Boston and our public transit system uses RFID cards for regular
+users of the subway. This means that everyone I know has one already in their
+pocket, so it makes it very easy to give any of my friends access. Also, the
+city gives out the cards for free, so it's easy to get your hands on unused
+ones just by looking for them in the subway stations.
+
 Using their existing RFID tag, a person can unlock a door if they're in the
 right group. It's easy to switch which current group is allowed access, so
 groups can be set based on who's allowed in at a given point in time.
@@ -11,12 +20,6 @@ For example, a close group of friends who have regular parties could all be
 added to a group, which could be switched to on when that party is happening.
 Or one could use it to only allow a limited number people in during the
 evening, but allow more in during the day.
-
-I live near Boston and our public transit system uses these cards for regular
-users of the subway. This means that everyone I know has one already in their
-pocket, so it makes it very easy to give any of my friends access. Also, the
-city gives out the cards for free, so it's easy to get your hands on unused
-ones just by looking for them in the subway stations.
 
 Below are some details if you'd like to build one yourself. I was going for
 style, compactness, and better control over a quick hack, so there are many
