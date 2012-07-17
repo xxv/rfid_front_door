@@ -234,3 +234,18 @@ laser cut boxes that fit together nicely.
 [photo-housing-flickr]: http://www.flickr.com/photos/xxv/7591949674/in/set-72157630623535792
 [photo-set]: http://www.flickr.com/photos/xxv/sets/72157630623535792/
 
+This entire project is stored in git and can be easily cloned:
+
+    git clone git://staticfree.info/git/rfid_front_door
+
+If you'd like to contribute changes, just [send me an
+email](mailto:steve@staticfree.info) with your changes committed to a public
+repository (you can always use Gitorious or Github).
+
+License
+-------
+
+All source code is licensed under the GPLv3 unless otherwise noted; all photos, SVG
+documents, documentation, and art are CC-by-sa.
+
+
