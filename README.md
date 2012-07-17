@@ -1,6 +1,8 @@
 RFID Front Door
 ===============
 
+[![RFID reader][photo-overview-thumb]][photo-overview-flickr]
+
 Using their existing RFID tag, a person can unlock a door if they're in the
 right group. It's easy to switch which current group is allowed access, so
 groups can be set based on who's allowed in at a given point in time.
@@ -196,6 +198,10 @@ for many setups and a simple relay (+ transistor) would suffice.
 Housing
 -------
 
+[![RFID reader opened][photo-housing-thumb]][photo-housing-flickr]
+
+More photos in the [RFID front door photoset][photo-set].
+
 One of the things that I love is hardware with beautiful housing. So I
 attempted to create a wooden housing based on examples of ornately decorated
 objects that I found. I'm going to be looking at this every day, so I wanted it
@@ -220,4 +226,9 @@ laser cut boxes that fit together nicely.
 [bluetooth]: http://www.sparkfun.com/products/9358
 [relay]: https://www.seeedstudio.com/depot/grove-relay-p-769.html?cPath=156_160
 [BoxMaker]: http://www.rahulbotics.com/personal-projects/boxmaker/
+[photo-overview-thumb]: http://farm8.staticflickr.com/7261/7592050094_bdfeb5825d_q.jpg
+[photo-overview-flickr]: http://www.flickr.com/photos/xxv/7592050094/in/set-72157630623535792/
+[photo-housing-thumb]: http://farm9.staticflickr.com/8025/7591949674_e8f4b62f93_q_d.jpg
+[photo-housing-flickr]: http://www.flickr.com/photos/xxv/7591949674/in/set-72157630623535792
+[photo-set]: http://www.flickr.com/photos/xxv/sets/72157630623535792/
 
