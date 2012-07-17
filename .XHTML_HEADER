@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" 
-     prefix="og: http://ogp.me/ns#"
       xml:lang="en" lang="en">
-<head>
+      <head prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article#">
   <title>RFID front door lock</title>
   <meta property="og:title" content="RFID front door lock" />
   <meta property="og:type" content="article" />
   <meta property="og:image" content="reader-overview.thumb.jpg" />
+  <meta property="og:url" content="http://staticfree.info/projects/rfid_front_door/" />
   <meta property="og:description" content="This is a classy RFID reader to unlock our home's front door. It supports groups and has an optional Android app." />
+  <meta property="article:author" content="http://staticfree.info/steve/" />
+
 </head>
 <body>
