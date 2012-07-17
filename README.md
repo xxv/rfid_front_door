@@ -1,5 +1,5 @@
-RFID Front Door
-===============
+RFID Front Door Lock
+====================
 
 [![RFID reader][photo-overview-thumb]][photo-overview-flickr]
 
@@ -228,9 +228,9 @@ laser cut boxes that fit together nicely.
 [bluetooth]: http://www.sparkfun.com/products/9358
 [relay]: https://www.seeedstudio.com/depot/grove-relay-p-769.html?cPath=156_160
 [BoxMaker]: http://www.rahulbotics.com/personal-projects/boxmaker/
-[photo-overview-thumb]: http://farm8.staticflickr.com/7261/7592050094_bdfeb5825d_q.jpg
+[photo-overview-thumb]: reader-overview.thumb.jpg
 [photo-overview-flickr]: http://www.flickr.com/photos/xxv/7592050094/in/set-72157630623535792/
-[photo-housing-thumb]: http://farm9.staticflickr.com/8025/7591949674_e8f4b62f93_q_d.jpg
+[photo-housing-thumb]: reader-housing.thumb.jpg
 [photo-housing-flickr]: http://www.flickr.com/photos/xxv/7591949674/in/set-72157630623535792
 [photo-set]: http://www.flickr.com/photos/xxv/sets/72157630623535792/
 

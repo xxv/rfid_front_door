@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml" 
+     prefix="og: http://ogp.me/ns#"
       xml:lang="en" lang="en">
 <head>
-  <title>RFID front door</title>
+  <title>RFID front door lock</title>
+  <meta property="og:title" content="RFID front door lock" />
+  <meta property="og:type" content="article" />
+  <meta property="og:image" content="reader-overview.thumb.jpg" />
 </head>
 <body>
