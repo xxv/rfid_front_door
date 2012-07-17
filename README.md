@@ -207,6 +207,8 @@ attempted to create a wooden housing based on examples of ornately decorated
 objects that I found. I'm going to be looking at this every day, so I wanted it
 to be pleasant and not as impersonal as so much technology feels.
 
+[![housing SVG](housing/box_main.thumb.png)](housing/box\_main.svg)  [![reader housing SVG](housing/ornate_antenna_cover.thumb.png)](housing/ornate\_antenna\_cover.svg)
+
 There are two housings: one to hold the Arduino + ProtoShield, RFID reader
 board and Bluetooth transceiver; and another to decorate the RFID reader
 itself. Both are intended to be lasercut.
