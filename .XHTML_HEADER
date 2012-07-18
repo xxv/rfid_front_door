@@ -5,7 +5,7 @@
   <title>RFID front door lock</title>
   <meta property="og:title" content="RFID front door lock" />
   <meta property="og:type" content="article" />
-  <meta property="og:image" content="reader-overview.thumb.jpg" />
+  <meta property="og:image" content="http://staticfree.info/projects/rfid_front_door/rfid_front_door-overview.jpg" />
   <meta property="og:url" content="http://staticfree.info/projects/rfid_front_door/" />
   <meta property="og:description" content="This is a classy RFID reader to unlock our home's front door. It supports groups and has an optional Android app." />
   <meta property="article:author" content="http://staticfree.info/steve/" />
