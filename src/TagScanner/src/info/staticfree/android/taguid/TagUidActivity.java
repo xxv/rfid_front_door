@@ -290,6 +290,9 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		Toast.makeText(this, t + " copied to clipboard.", Toast.LENGTH_SHORT).show();
 	}
 
+	// ////////////////////////////////////////
+	// Bluetooth service
+	// ////////////////////////////////////////
 
 	/**
 	 * Only autoconnects if Bluetooth is already enabled and the device has been paired before.
@@ -323,9 +326,13 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			return;
 		}
 
-		final Intent arduinoService = new Intent(this, ArduinoConnectService.class);
-		startService(arduinoService);
-		bindService(arduinoService, this, 0);
+		if (mArduinoService == null) {
+			final Intent arduinoService = new Intent(this, ArduinoConnectService.class);
+			startService(arduinoService);
+			bindService(arduinoService, this, 0);
+		} else {
+			mArduinoService.connect();
+		}
 	}
 
 	@Override
@@ -382,6 +389,12 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 					findViewById(R.id.connect).setVisibility(View.GONE);
 					mFirstLoad = true;
 					break;
+
+				case ArduinoConnectService.STATE_DISCONNECTED:
+					mLoadingView.setVisibility(View.GONE);
+					findViewById(R.id.connect).setVisibility(View.VISIBLE);
+					break;
+
 			}
 
 		}
