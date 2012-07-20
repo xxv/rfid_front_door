@@ -142,13 +142,21 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 		mAdapter.disableForegroundDispatch(this);
 		if (mArduinoService != null) {
+
 			unbindService(this);
+			mArduinoService = null;
 		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+
+		if (mArduinoService == null) {
+			final Intent arduinoService = new Intent(this, ArduinoConnectService.class);
+			startService(arduinoService);
+			bindService(arduinoService, this, 0);
+		}
 
 		maybeAutoconnect();
 		mAdapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray, techListsArray);
@@ -326,11 +334,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			return;
 		}
 
-		if (mArduinoService == null) {
-			final Intent arduinoService = new Intent(this, ArduinoConnectService.class);
-			startService(arduinoService);
-			bindService(arduinoService, this, 0);
-		} else {
+		if (mArduinoService != null) {
 			mArduinoService.connect();
 		}
 	}
