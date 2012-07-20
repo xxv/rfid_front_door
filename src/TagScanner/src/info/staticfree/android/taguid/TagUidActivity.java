@@ -3,15 +3,17 @@ package info.staticfree.android.taguid;
 import java.math.BigInteger;
 import java.util.List;
 
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilter.MalformedMimeTypeException;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.NfcA;
@@ -19,6 +21,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract.Contacts;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.LoaderManager.LoaderCallbacks;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -38,9 +44,10 @@ import com.example.android.BluetoothChat.DeviceListActivity;
 
 /**
  * RFID door interface
- * 
+ *
  */
-public class TagUidActivity extends Activity implements OnClickListener, ServiceConnection {
+public class TagUidActivity extends FragmentActivity implements OnClickListener, ServiceConnection,
+		LoaderCallbacks<Cursor> {
 	private static final String TAG = TagUidActivity.class.getSimpleName();
 
 	PendingIntent pendingIntent;
@@ -61,7 +68,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	private ArduinoConnectService mArduinoService;
 
 	private ListView mList;
-	private RfidAdapter mArrayAdapter;
+	private RfidAdapter mRfidListAdapter;
 
 	private ProgressBar mLoadingView;
 
@@ -71,6 +78,8 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	private int mLastSelectedGroup;
 
 	private RfidRecord mSelectedId;
+
+	private Cursor mContacts;
 
 	private static final int REQUEST_PAIR = 100, REQUEST_BT_ENABLE = 101, REQUEST_BT_DEVICE = 102;
 
@@ -114,7 +123,10 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		mUidIntTextView.setOnClickListener(this);
 
 		mList = (ListView) findViewById(android.R.id.list);
-		mArrayAdapter = new RfidAdapter(this, R.layout.rfid_list_item);
+
+		mRfidListAdapter = new RfidAdapter(this, R.layout.rfid_list_item, null);
+
+		getSupportLoaderManager().initLoader(0, null, this);
 
 		parseIntent(getIntent());
 
@@ -143,7 +155,9 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		if (savedInstanceState != null) {
 			mScannedRecord = savedInstanceState.getParcelable(INSTANCE_STATE_SCANNED_ID);
 			mSelectedId = savedInstanceState.getParcelable(INSTANCE_STATE_SELECTED_ID);
-			showUid(mScannedRecord);
+			if (mScannedRecord != null) {
+				showUid(mScannedRecord);
+			}
 		}
 	}
 
@@ -245,7 +259,14 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 	}
 
 	private void associateIdWithContact(RfidRecord selectedId, Intent data) {
-		Toast.makeText(this, data + " " + selectedId, Toast.LENGTH_LONG).show();
+
+		final ContentValues cv = new ContentValues();
+
+		cv.put(ContactId.CONTACT_URI, data.getDataString());
+		cv.put(ContactId.RFID, selectedId.getIdString());
+
+		final Uri rec = getContentResolver().insert(ContactId.CONTENT_URI, cv);
+		Toast.makeText(this, "Added: " + rec, Toast.LENGTH_LONG).show();
 	}
 
 	@Override
@@ -279,10 +300,10 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			return;
 		}
 
-		final RfidRecord item = mArrayAdapter.getItem(info.position);
+		final RfidRecord item = mRfidListAdapter.getItem(info.position);
 
 		getMenuInflater().inflate(R.menu.rfid_context, menu);
-		menu.setHeaderTitle(item.toIdString());
+		menu.setHeaderTitle(item.getIdString());
 	}
 
 	@Override
@@ -295,7 +316,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 			return false;
 		}
 
-		final RfidRecord rfid = mArrayAdapter.getItem(info.position);
+		final RfidRecord rfid = mRfidListAdapter.getItem(info.position);
 
 		switch (item.getItemId()) {
 			case R.id.delete:
@@ -318,7 +339,7 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		// final RfidRecord r = new RfidRecord(uid, 0);
 		// mRfidRecord = new RfidRecord(uid, 1);
 
-		mUidTextView.setText(uid.toIdString());
+		mUidTextView.setText(uid.getIdString());
 		final byte[] unsigned = new byte[uid.id.length + 1];
 
 		System.arraycopy(uid.id, 0, unsigned, 1, uid.id.length);
@@ -407,9 +428,10 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 		@Override
 		public void onListResult(List<RfidRecord> rfidRecords) {
 
-			mArrayAdapter = new RfidAdapter(TagUidActivity.this, R.layout.rfid_list_item,
-					rfidRecords);
-			mList.setAdapter(mArrayAdapter);
+			mRfidListAdapter = new RfidAdapter(TagUidActivity.this, R.layout.rfid_list_item,
+					rfidRecords, null);
+			mList.setAdapter(mRfidListAdapter);
+			getSupportLoaderManager().restartLoader(0, null, TagUidActivity.this);
 
 		}
 
@@ -468,5 +490,22 @@ public class TagUidActivity extends Activity implements OnClickListener, Service
 
 		}
 	};
+
+	@Override
+	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+		return new CursorLoader(this, ContactId.CONTENT_URI, null, null, null, null);
+	}
+
+	@Override
+	public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
+		mRfidListAdapter.swapCursor(c);
+
+	}
+
+	@Override
+	public void onLoaderReset(Loader<Cursor> loader) {
+		mRfidListAdapter.swapCursor(null);
+
+	}
 
 }

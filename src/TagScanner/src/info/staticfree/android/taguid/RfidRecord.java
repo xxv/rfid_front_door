@@ -1,5 +1,9 @@
 package info.staticfree.android.taguid;
 
+import java.math.BigInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -13,7 +17,12 @@ public class RfidRecord implements Parcelable {
 		this.groups = groups;
 	}
 
-	public String toIdString() {
+	public RfidRecord(String id, int groups) {
+		this.id = parseIdString(id);
+		this.groups = groups;
+	}
+
+	public String getIdString() {
 		final StringBuilder sb = new StringBuilder();
 		boolean sep = false;
 		for (final byte b : id) {
@@ -29,9 +38,25 @@ public class RfidRecord implements Parcelable {
 		return sb.toString();
 	}
 
+	private static final Pattern REC_FORMAT = Pattern.compile("([A-Fa-f0-9:]+)");
+
+	public static byte[] parseIdString(String id) throws IllegalArgumentException {
+
+		final Matcher m = REC_FORMAT.matcher(id);
+		if (!m.matches()) {
+			throw new IllegalArgumentException("Could not parse ID");
+		}
+
+		final String hexString = m.group(1);
+
+		final String filteredHex = hexString.replaceAll("[^A-Fa-f0-9]", "");
+
+		return new BigInteger(filteredHex, 16).toByteArray();
+	}
+
 	@Override
 	public String toString() {
-		return groups + " " + toIdString();
+		return groups + " " + getIdString();
 	}
 
 	@Override

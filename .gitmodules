@@ -1,0 +1,3 @@
+[submodule "src/TagScanner/libs-src/SimpleContentProvider"]
+	path = src/TagScanner/libs-src/SimpleContentProvider
+	url = https://github.com/mitmel/SimpleContentProvider.git

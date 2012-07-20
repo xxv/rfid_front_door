@@ -1,6 +1,5 @@
 package info.staticfree.android.taguid;
 
-import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -47,7 +46,6 @@ public class ArduinoConnectService extends Service {
 
 	private static final char CMD_VER = 'v', CMD_LIST = 'l', CMD_ADD = 'a', CMD_DEL = 'd',
 			CMD_OPEN = 'o', CMD_CUR_GROUP = 'g';
-
 
 	private final Queue<String> mSendQueue = new ConcurrentLinkedQueue<String>();
 
@@ -129,7 +127,6 @@ public class ArduinoConnectService extends Service {
 
 	private static final Pattern REC_FORMAT = Pattern.compile("(\\d+)\t([A-Fa-f0-9:]+)");
 
-
 	private RfidRecord parseRecord(String recLine) {
 		final Matcher m = REC_FORMAT.matcher(recLine);
 		if (!m.matches()) {
@@ -138,10 +135,7 @@ public class ArduinoConnectService extends Service {
 
 		final String hexString = m.group(2);
 
-		final String filteredHex = hexString.replaceAll("[^A-Fa-f0-9]", "");
-
-		final RfidRecord r = new RfidRecord(new BigInteger(filteredHex, 16).toByteArray(),
-				Integer.valueOf(m.group(1)));
+		final RfidRecord r = new RfidRecord(hexString, Integer.valueOf(m.group(1)));
 
 		return r;
 	}
@@ -175,7 +169,7 @@ public class ArduinoConnectService extends Service {
 	}
 
 	private void onCommandFinished() {
-		switch (mCmd){
+		switch (mCmd) {
 			case CMD_VER:
 				if (mResultListener != null) {
 					mResultListener.onVersionResult(mCmdResults.get(0));
@@ -220,7 +214,7 @@ public class ArduinoConnectService extends Service {
 
 			case CMD_CUR_GROUP:
 				if (mResultListener != null) {
-				mResultListener.onCurGroupResult(Integer.valueOf(mCmdResults.get(0)));
+					mResultListener.onCurGroupResult(Integer.valueOf(mCmdResults.get(0)));
 				}
 				break;
 		}
@@ -229,7 +223,6 @@ public class ArduinoConnectService extends Service {
 	public void requestVersion() {
 		sendCommand(CMD_VER);
 	}
-
 
 	public void requestOpen() {
 		sendCommand(CMD_OPEN);
@@ -257,11 +250,11 @@ public class ArduinoConnectService extends Service {
 	}
 
 	public void requestDeleteId(RfidRecord record) {
-		sendCommand(CMD_DEL + " " + record.toIdString());
+		sendCommand(CMD_DEL + " " + record.getIdString());
 	}
 
 	public void requestAdd(RfidRecord r) {
-		sendCommand(CMD_ADD + r.toIdString());
+		sendCommand(CMD_ADD + r.getIdString());
 	}
 
 	private void onCmdSent(char cmdId) {
@@ -311,7 +304,7 @@ public class ArduinoConnectService extends Service {
 	}
 
 	public class LocalBinder extends Binder {
-		public ArduinoConnectService getService(){
+		public ArduinoConnectService getService() {
 			return ArduinoConnectService.this;
 		}
 	}

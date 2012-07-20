@@ -2,4 +2,5 @@ doc/
 src/TagScanner/bin/
 src/TagScanner/gen/
 README.xhtml
+README.html
 housing/*.thumb.png
