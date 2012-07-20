@@ -6,9 +6,10 @@
     android:orientation="vertical" >
 
     <RelativeLayout
-        android:id="@+id/RelativeLayout2"
+        android:id="@+id/controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:enabled="false"
         android:background="@android:drawable/alert_dark_frame" >
 
         <TextView
@@ -59,7 +60,6 @@
 
             <!-- Preview: listitem=@android:layout/simple_spinner_item -->
         </Spinner>
-
     </RelativeLayout>
 
     <Button
@@ -74,8 +74,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/RelativeLayout2" >
-
+        android:animateLayoutChanges="true"
+        android:layoutAnimation="@anim/layout_fade_in"
+        android:layout_below="@+id/controls" >
     </ListView>
 
     <ProgressBar

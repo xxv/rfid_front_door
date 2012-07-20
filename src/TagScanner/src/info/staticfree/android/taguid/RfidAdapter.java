@@ -20,7 +20,7 @@ import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
 public class RfidAdapter implements Adapter, ListAdapter {
-	private final List<RfidRecord> mRecords;
+	private List<RfidRecord> mRecords;
 	private final int mLayout;
 	private final Context mContext;
 	private final LayoutInflater mLayoutInflater;
@@ -43,7 +43,11 @@ public class RfidAdapter implements Adapter, ListAdapter {
 		mObservable = new DataSetObservable();
 
 		swapCursor(contacts);
+	}
 
+	public void setRecords(List<RfidRecord> records) {
+		mRecords = records;
+		mObservable.notifyChanged();
 	}
 
 	@Override
@@ -58,7 +62,7 @@ public class RfidAdapter implements Adapter, ListAdapter {
 
 	@Override
 	public int getCount() {
-		return mRecords.size();
+		return mRecords != null ? mRecords.size() : 0;
 	}
 
 	@Override
@@ -119,7 +123,7 @@ public class RfidAdapter implements Adapter, ListAdapter {
 
 	@Override
 	public boolean isEmpty() {
-		return mRecords.isEmpty();
+		return mRecords != null ? mRecords.isEmpty() : true;
 	}
 
 	@Override

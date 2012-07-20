@@ -38,6 +38,42 @@ public class RfidRecord implements Parcelable {
 		return sb.toString();
 	}
 
+	public String getGroups() {
+		switch (groups) {
+			case 0:
+				return "no groups";
+			case 127:
+				return "all groups";
+			default: {
+				final StringBuilder sb = new StringBuilder();
+				// int prevShown = -1;
+				// for (int i = 1; i <= 7; i++) {
+				// if ((groups & (1 << (i - 1))) != 0) {
+				// if (prevShown != i - 1) {
+				// sb.append(i);
+				// prevShown = i;
+				// }
+				// }else{
+				// if (prevShown)
+				// }
+				// }
+				// return sb.toString();
+
+				boolean delim = false;
+				for (int i = 1; i <= 7; i++) {
+					if ((groups & (1 << (i - 1))) != 0) {
+						if (delim) {
+							sb.append(',');
+						}
+							sb.append(i);
+						delim = true;
+					}
+				}
+				return sb.toString();
+			}
+		}
+	}
+
 	private static final Pattern REC_FORMAT = Pattern.compile("([A-Fa-f0-9:]+)");
 
 	public static byte[] parseIdString(String id) throws IllegalArgumentException {
@@ -56,7 +92,7 @@ public class RfidRecord implements Parcelable {
 
 	@Override
 	public String toString() {
-		return groups + " " + getIdString();
+		return getGroups() + " " + getIdString();
 	}
 
 	@Override

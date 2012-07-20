@@ -32,6 +32,7 @@ import android.view.ContextMenu.ContextMenuInfo;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ListView;
@@ -44,6 +45,10 @@ import com.example.android.BluetoothChat.DeviceListActivity;
 
 /**
  * RFID door interface
+ *
+ */
+/**
+ * @author steve
  *
  */
 public class TagUidActivity extends FragmentActivity implements OnClickListener, ServiceConnection,
@@ -60,6 +65,7 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 
 	private TextView mUidTextView;
 	private TextView mUidIntTextView;
+	private ViewGroup mControls;
 
 	private BluetoothAdapter mBluetoothAdapter;
 
@@ -96,6 +102,7 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 		mUidTextView = (TextView) findViewById(R.id.uid);
 		mUidIntTextView = (TextView) findViewById(R.id.uid_int);
 		mLoadingView = (ProgressBar) findViewById(R.id.loading);
+		mControls = (ViewGroup) findViewById(R.id.controls);
 		findViewById(R.id.connect).setOnClickListener(this);
 		findViewById(R.id.add).setOnClickListener(this);
 		findViewById(R.id.open).setOnClickListener(this);
@@ -125,6 +132,7 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 		mList = (ListView) findViewById(android.R.id.list);
 
 		mRfidListAdapter = new RfidAdapter(this, R.layout.rfid_list_item, null);
+		mList.setAdapter(mRfidListAdapter);
 
 		getSupportLoaderManager().initLoader(0, null, this);
 
@@ -335,9 +343,12 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 
 	}
 
+	/**
+	 * Displays the ID on the screen so that it can be added.
+	 *
+	 * @param uid
+	 */
 	private void showUid(RfidRecord uid) {
-		// final RfidRecord r = new RfidRecord(uid, 0);
-		// mRfidRecord = new RfidRecord(uid, 1);
 
 		mUidTextView.setText(uid.getIdString());
 		final byte[] unsigned = new byte[uid.id.length + 1];
@@ -428,9 +439,7 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 		@Override
 		public void onListResult(List<RfidRecord> rfidRecords) {
 
-			mRfidListAdapter = new RfidAdapter(TagUidActivity.this, R.layout.rfid_list_item,
-					rfidRecords, null);
-			mList.setAdapter(mRfidListAdapter);
+			mRfidListAdapter.setRecords(rfidRecords);
 			getSupportLoaderManager().restartLoader(0, null, TagUidActivity.this);
 
 		}
@@ -439,6 +448,8 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 		public void onStateChange(int state) {
 			switch (state) {
 				case ArduinoConnectService.STATE_READY:
+					mLoadingView.setVisibility(View.GONE);
+					mControls.setEnabled(true);
 					// handle the first load
 					if (mFirstLoad) {
 						mLoadingView.setVisibility(View.GONE);
@@ -453,16 +464,25 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
 				case ArduinoConnectService.STATE_CONNECTING:
 					mLoadingView.setVisibility(View.VISIBLE);
 					findViewById(R.id.connect).setVisibility(View.GONE);
+					mControls.setEnabled(false);
 					mFirstLoad = true;
 					break;
 
 				case ArduinoConnectService.STATE_DISCONNECTED:
+					mControls.setEnabled(false);
 					mLoadingView.setVisibility(View.GONE);
 					findViewById(R.id.connect).setVisibility(View.VISIBLE);
+					mRfidListAdapter.setRecords(null);
+
+					break;
+
+				case ArduinoConnectService.STATE_WAITING_FOR_RESPONSE:
+				case ArduinoConnectService.STATE_READING_RESPONSE:
+					mLoadingView.setVisibility(View.VISIBLE);
+					mControls.setEnabled(false);
 					break;
 
 			}
-
 		}
 
 		@Override
