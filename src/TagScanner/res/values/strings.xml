@@ -21,4 +21,5 @@
         <item >6</item>
         <item >7</item>
     </string-array>
+        <string name="associate_contact">Associate Contact</string>
 </resources>

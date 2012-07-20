@@ -135,12 +135,13 @@ public class ArduinoConnectService extends Service {
 		if (!m.matches()) {
 			return null;
 		}
-		final RfidRecord r = new RfidRecord();
-		r.groups = Integer.valueOf(m.group(1));
+
 		final String hexString = m.group(2);
 
 		final String filteredHex = hexString.replaceAll("[^A-Fa-f0-9]", "");
-		r.id = new BigInteger(filteredHex, 16).toByteArray();
+
+		final RfidRecord r = new RfidRecord(new BigInteger(filteredHex, 16).toByteArray(),
+				Integer.valueOf(m.group(1)));
 
 		return r;
 	}
