@@ -241,6 +241,8 @@ This entire project is stored in git and can be easily cloned:
 
     git clone git://staticfree.info/git/rfid_front_door
 
+Or you can browse the [RFID Front Door repository][https://staticfree.info/git/rfid_front_door.git] online.
+
 If you'd like to contribute changes, just [send me an
 email](mailto:steve@staticfree.info) with your changes committed to a public
 repository (you can always use Gitorious or Github).
