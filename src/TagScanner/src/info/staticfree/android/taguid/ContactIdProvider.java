@@ -16,5 +16,4 @@ public class ContactIdProvider extends SimpleContentProvider {
 
 		addDirAndItemUri(contacts, ContactId.PATH);
 	}
-
 }
