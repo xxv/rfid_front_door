@@ -14,6 +14,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilter.MalformedMimeTypeException;
+import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -24,6 +25,7 @@ import android.nfc.tech.NfcA;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract.Contacts;
 import android.support.v4.app.FragmentActivity;
@@ -222,6 +224,10 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
                 export();
                 return true;
 
+            case R.id.importContacts:
+                importContacts();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -236,6 +242,25 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
             Log.e(TAG, "export error", e);
         } catch (final JSONException e) {
             Log.e(TAG, "export error", e);
+        }
+    }
+
+    private void importContacts() {
+        try {
+            ContactUtils.importContacts(this, new File(Environment.getExternalStorageDirectory(),
+                    "rfid_export.json"));
+        } catch (final RemoteException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (final OperationApplicationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 

@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/export" android:title="Export" android:showAsAction="never"></item>
+
+    <item
+        android:id="@+id/export"
+        android:showAsAction="never"
+        android:title="Export"/>
+    <item
+        android:id="@+id/importContacts"
+        android:showAsAction="never"
+        android:title="Import"/>
 
 </menu>
