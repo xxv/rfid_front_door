@@ -16,6 +16,8 @@ package edu.mit.mobile.android.greenwheel;
  * limitations under the License.
  */
 
+import info.staticfree.android.taguid.BuildConfig;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +43,7 @@ import android.util.Log;
 public class BluetoothService {
     // Debugging
     private static final String TAG = "BluetoothService";
-    private static final boolean D = true;
+    private static final boolean D = BuildConfig.DEBUG;
 
     private static final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -218,12 +220,16 @@ public class BluetoothService {
     }
 
     /**
-     * Stop all threads
+     * Stop all threads and disconnect.
      */
     public synchronized void stop() {
         if (D) {
-			Log.d(TAG, "stop");
-		}
+            Log.d(TAG, "stop");
+        }
+
+        if (mState == STATE_NONE) {
+            return;
+        }
 
         reconnOk = false;
         if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null;}
@@ -391,7 +397,7 @@ public class BluetoothService {
                             .sendToTarget();
 
                 } catch (final IOException e) {
-                    Log.e(TAG, "disconnected", e);
+                    Log.d(TAG, "disconnected");
                     connectionLost();
                     break;
                 }
