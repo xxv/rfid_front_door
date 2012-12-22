@@ -181,7 +181,9 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
     protected void onPause() {
         super.onPause();
 
-        mAdapter.disableForegroundDispatch(this);
+        if (mAdapter != null) {
+            mAdapter.disableForegroundDispatch(this);
+        }
         if (mArduinoService != null) {
 
             unbindService(this);
@@ -200,7 +202,10 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
         }
 
         maybeAutoconnect();
-        mAdapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray, techListsArray);
+        if (mAdapter != null) {
+            mAdapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray,
+                    techListsArray);
+        }
     }
 
     @Override
