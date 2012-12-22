@@ -22,4 +22,6 @@
         <item >7</item>
     </string-array>
         <string name="associate_contact">Associate Contact</string>
+        <string name="open_the_door">Open the door</string>
+        <string name="permission_door_open_description">Allows the application to open the door if Bluetooth is enabled and it\'s nearby</string>
 </resources>
