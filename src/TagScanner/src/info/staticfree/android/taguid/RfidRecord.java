@@ -92,7 +92,7 @@ public class RfidRecord implements Parcelable {
 
 	@Override
 	public String toString() {
-		return getGroups() + " " + getIdString();
+        return getIdString() + " (" + getGroups() + ")";
 	}
 
 	@Override
