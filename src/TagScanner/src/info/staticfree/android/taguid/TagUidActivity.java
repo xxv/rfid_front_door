@@ -185,7 +185,7 @@ public class TagUidActivity extends FragmentActivity implements OnClickListener,
             mAdapter.disableForegroundDispatch(this);
         }
         if (mArduinoService != null) {
-
+            mArduinoService.setResultListener(null);
             unbindService(this);
             mArduinoService = null;
         }
