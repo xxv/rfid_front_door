@@ -95,7 +95,7 @@ public class RfidAdapter implements Adapter, ListAdapter {
         }
         final RfidRecord id = getItem(position);
 
-        CharSequence label;
+        CharSequence name;
 
         final QuickContactBadge quickContactBadge = (QuickContactBadge) convertView
                 .findViewById(R.id.contact);
@@ -110,18 +110,20 @@ public class RfidAdapter implements Adapter, ListAdapter {
                 loadContactFace(contactUri);
             }
 
-            label = mContactNames.get(contactUri) + " (" + id.getGroups() + ")";
+            name = mContactNames.get(contactUri);
 
             quickContactBadge.setVisibility(View.VISIBLE);
         } else {
             quickContactBadge.setVisibility(View.GONE);
             quickContactBadge.assignContactUri(null);
-            label = null;
+            name = null;
         }
 
-        if (label == null) {
-            label = id.toString();
+        if (name == null) {
+            name = id.getIdString();
         }
+
+        final CharSequence label = name + " (" + id.getGroups() + ")";
 
         ((TextView) convertView.findViewById(android.R.id.text1)).setText(label);
 

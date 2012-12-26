@@ -9,6 +9,9 @@ import android.os.Parcelable;
 
 public class RfidRecord implements Parcelable {
 
+    public static final int GROUP_MIN = 1;
+    public static final int GROUP_MAX = 7;
+
 	public final int groups;
 	public final byte[] id;
 
@@ -46,35 +49,43 @@ public class RfidRecord implements Parcelable {
 				return "all groups";
 			default: {
 				final StringBuilder sb = new StringBuilder();
-				// int prevShown = -1;
-				// for (int i = 1; i <= 7; i++) {
-				// if ((groups & (1 << (i - 1))) != 0) {
-				// if (prevShown != i - 1) {
-				// sb.append(i);
-				// prevShown = i;
-				// }
-				// }else{
-				// if (prevShown)
-				// }
-				// }
-				// return sb.toString();
 
 				boolean delim = false;
-				for (int i = 1; i <= 7; i++) {
-					if ((groups & (1 << (i - 1))) != 0) {
-						if (delim) {
-							sb.append(',');
-						}
-							sb.append(i);
-						delim = true;
-					}
+                boolean run = false;
+                boolean wasRun = false;
+                for (int i = GROUP_MIN; i <= GROUP_MAX; i++) {
+                    wasRun = run;
+                    run = run && (i < GROUP_MAX && isInGroup(i + 1));
+
+                    if (!run) {
+                        if (isInGroup(i)) {
+                            if (!wasRun && delim) {
+                                sb.append(',');
+                            }
+                            sb.append(i);
+                            // look ahead
+                            if (i < GROUP_MAX && isInGroup(i + 1)) {
+                                run = true;
+                                sb.append('-');
+                            }
+                            delim = true;
+                        }
+                    }
 				}
 				return sb.toString();
 			}
 		}
 	}
 
-	private static final Pattern REC_FORMAT = Pattern.compile("([A-Fa-f0-9:]+)");
+    public boolean isInGroup(int i) {
+        if (i < GROUP_MIN || i > GROUP_MAX) {
+            return false;
+        }
+
+        return (groups & (1 << (i - 1))) != 0;
+    }
+
+    private static final Pattern REC_FORMAT = Pattern.compile("([A-Fa-f0-9:]+)");
 
 	public static byte[] parseIdString(String id) throws IllegalArgumentException {
 
