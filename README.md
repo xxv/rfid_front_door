@@ -1,4 +1,4 @@
-RFID Front Door Lock
+RFID/NFC Tag Front Door Lock
 ====================
 
 [![RFID reader][photo-overview-thumb]][photo-overview-flickr]
@@ -25,15 +25,22 @@ Below are some details if you'd like to build one yourself. I was going for
 style, compactness, and better control over a quick hack, so there are many
 details here that can be omitted if desired.
 
-RFIDs
+RFIDs / NFC Tags
 -----
 
 The system was designed to work with 13.56MHz IEC 14443 Mifare Classic and
-other similar RFID tags, but one could use another reader or tag type if
+other similar NFC tags, but one could use another reader or tag type if
 desired.
 
 Up to 50 tags can be stored on an atmega168 chip or 100 for a mega328 (check
 the printing on the main chip on your Arduino board).
+
+Just a word on terminology: "RFID" and "NFC tag" are interchangeable for this
+use case, much in the same way that "smartphone" and "Android device" are often
+interchangeable. However one can have smartphones that aren't Android devices
+and also Android devices (such as a Google TV or smart watch) which aren't
+smartphones. I use "RFID" here to refer to the use of an NFC tag for its public
+ID number.
 
 Groups
 ------
